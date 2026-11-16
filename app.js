@@ -16,7 +16,16 @@ try {
   }
 } catch {}
 const topicOf = card => card.id <= 12 ? 'alkenes' : card.id <= 18 ? 'alkynes' : card.id <= 28 ? 'alcohols' : card.id <= 31 ? 'halides' : card.id <= 36 ? 'epoxides' : 'carbonyls';
-function activeDeck() { return deck.filter(card => options.topic === 'all' || topicOf(card) === options.topic); }
+const selectionKey = 'orgo-exam3-selected-v1';
+let selected = new Set(deck.filter(card => options.topic === 'all' || topicOf(card) === options.topic).map(card => card.id));
+try {
+  const saved = JSON.parse(localStorage.getItem(selectionKey));
+  if (Array.isArray(saved)) selected = new Set(saved.filter(id => deck.some(card => card.id === id)));
+} catch {}
+function activeDeck() { return deck.filter(card => selected.has(card.id)); }
+function updateProgress() {
+  $('progress').textContent = `${activeDeck().filter(card => state[card.id]).length} / ${activeDeck().length} reactions rated`;
+}
 let current, mode, revealed = false, last = null, count = 0;
 function save() { try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }
 function choose() {
@@ -42,25 +51,30 @@ function drawReaction() {
   updateVisibility();
 }
 function next() {
-  current = choose(); last = current.id; count++; revealed = false;
+  revealed = false;
+  updateProgress();
+  $('empty-selection').hidden = activeDeck().length > 0;
+  $('study-card').hidden = activeDeck().length === 0;
+  if (!activeDeck().length) { current = null; return; }
+  current = choose(); last = current.id; count++;
   mode = options.mode === 'mixed' ? (Math.random() < .5 ? 'reagents' : 'product') : options.mode;
   $('mode-label').textContent = mode === 'reagents' ? 'Recall the conditions' : 'Predict the product';
   $('question').textContent = mode === 'reagents' ? 'What reagents and conditions are needed?' : 'What product forms?';
   $('solution').hidden = true; $('reveal').hidden = false;
-  document.querySelector('details').open = false;
-  $('progress').textContent = `${activeDeck().filter(card => state[card.id]).length} / ${activeDeck().length} reactions rated`;
+  $('original-notes').open = false;
+  updateProgress();
   $('session-count').textContent = `Practice ${String(count).padStart(2, '0')}`;
   drawReaction();
   $('answer').src = current.image;
   updateVisibility();
 }
 function reveal() {
-  if (revealed) return;
+  if (!current || revealed) return;
   revealed = true; updateVisibility();
   $('solution').hidden = false; $('reveal').hidden = true;
 }
 function rate(rating) {
-  if (!revealed || ![1, 2, 3, 4].includes(rating)) return;
+  if (!current || !revealed || ![1, 2, 3, 4].includes(rating)) return;
   state[current.id] = rating; save();
   $('feedback').textContent = `Saved · ${rating * 25}% confidence. ${options.order === 'random' ? 'Continuing with equal card selection.' : rating < 3 ? 'You’ll see that reaction more often.' : rating === 4 ? 'That reaction will appear less often.' : 'Keep practicing to make it stick.'}`;
   next();
@@ -72,7 +86,7 @@ $('reset').onclick = () => {
     state = {}; save(); $('feedback').textContent = 'Progress cleared. Start fresh.'; next();
   }
 };
-for (const [name, id] of Object.entries({mode: 'practice-mode', topic: 'practice-topic', order: 'practice-order'})) {
+for (const [name, id] of Object.entries({mode: 'practice-mode', order: 'practice-order'})) {
   $(id).value = options[name];
   $(id).onchange = () => {
     options[name] = $(id).value;
@@ -81,10 +95,47 @@ for (const [name, id] of Object.entries({mode: 'practice-mode', topic: 'practice
     next();
   };
 }
+const groupNames = {alkenes:'Alkenes', alkynes:'Alkynes', alcohols:'Alcohols', halides:'Alkyl halides', epoxides:'Epoxides', carbonyls:'Carbonyls'};
+const cardInputs = new Map(), groupInputs = new Map();
+function selectionChanged() {
+  try { localStorage.setItem(selectionKey, JSON.stringify([...selected])); } catch {}
+  for (const [id, input] of cardInputs) input.checked = selected.has(id);
+  for (const [topic, input] of groupInputs) {
+    const cards = deck.filter(card => topicOf(card) === topic);
+    const total = cards.filter(card => selected.has(card.id)).length;
+    input.checked = total === cards.length;
+    input.indeterminate = total > 0 && total < cards.length;
+  }
+  $('selection-count').textContent = `${selected.size} / ${deck.length} selected`;
+  updateProgress();
+  if (!current || !selected.has(current.id)) next();
+}
+for (const [topic, name] of Object.entries(groupNames)) {
+  const group = document.createElement('fieldset');
+  const legend = document.createElement('legend');
+  const groupLabel = document.createElement('label');
+  const groupInput = document.createElement('input');
+  groupInput.type = 'checkbox'; groupInput.checked = true;
+  groupLabel.append(groupInput, document.createTextNode(name)); legend.append(groupLabel); group.append(legend);
+  groupInputs.set(topic, groupInput);
+  groupInput.onchange = () => {
+    for (const card of deck.filter(card => topicOf(card) === topic)) groupInput.checked ? selected.add(card.id) : selected.delete(card.id);
+    selectionChanged();
+  };
+  for (const card of deck.filter(card => topicOf(card) === topic)) {
+    const label = document.createElement('label'); label.className = 'reaction-choice';
+    const input = document.createElement('input'); input.type = 'checkbox'; input.checked = selected.has(card.id);
+    input.onchange = () => { input.checked ? selected.add(card.id) : selected.delete(card.id); selectionChanged(); };
+    label.append(input, document.createTextNode(card.name)); group.append(label); cardInputs.set(card.id, input);
+  }
+  $('reaction-checklist').append(group);
+}
+$('select-all').onclick = () => { selected = new Set(deck.map(card => card.id)); selectionChanged(); };
+$('clear-all').onclick = () => { selected.clear(); selectionChanged(); };
+selectionChanged();
 document.addEventListener('keydown', event => {
   if (['SELECT', 'INPUT', 'TEXTAREA'].includes(event.target.tagName) || event.target.isContentEditable) return;
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.code === 'Space' && event.target.tagName !== 'SUMMARY') { event.preventDefault(); reveal(); }
   else if (/^[1-4]$/.test(event.key)) { event.preventDefault(); rate(Number(event.key)); }
 });
-next();
