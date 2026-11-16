@@ -16,11 +16,19 @@ function choose() {
   return candidates.find((card, index) => (pick -= weights[index]) < 0) || candidates.at(-1);
 }
 function updateVisibility() {
-  for (const part of ['reagents', 'product']) {
-    const missing = mode === part && !revealed;
-    $(part).hidden = missing;
-    $('missing-' + part).hidden = !missing;
-  }
+  $('mask').hidden = revealed;
+  $('mask').style.display = revealed ? 'none' : '';
+}
+function drawReaction() {
+  $('reaction-image').setAttribute('href', current.reaction);
+  const [x, y, width, height] = current.masks[mode];
+  for (const [name, value] of Object.entries({x, y, width, height})) $('mask-cover').setAttribute(name, value);
+  $('mask-box').setAttribute('x', x + 12);
+  $('mask-box').setAttribute('width', width - 24);
+  $('mask-label').setAttribute('x', x + width / 2);
+  $('mask-label').textContent = mode === 'reagents' ? '? Reagents' : '? Product';
+  $('reaction').setAttribute('aria-label', mode === 'reagents' ? 'Starting structure and product. Work out the reagents.' : 'Starting structure and reagents. Work out the product.');
+  updateVisibility();
 }
 function next() {
   current = choose(); last = current.id; count++; revealed = false;
@@ -31,7 +39,7 @@ function next() {
   document.querySelector('details').open = false;
   $('progress').textContent = `${Object.keys(state).length} / ${deck.length} reactions rated`;
   $('session-count').textContent = `Practice ${String(count).padStart(2, '0')}`;
-  for (const part of ['start', 'reagents', 'product']) $(part).src = current.parts[part];
+  drawReaction();
   $('answer').src = current.image;
   updateVisibility();
 }

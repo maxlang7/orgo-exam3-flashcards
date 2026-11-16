@@ -7,11 +7,11 @@
 <section class="study-card" aria-labelledby="question">
 <div class="card-heading"><span class="pill" id="mode-label"></span><span id="session-count">Practice 01</span></div>
 <h2 id="question"></h2><p class="instruction">Work it out before revealing the answer.</p>
-<div class="reaction" id="reaction">
-<div class="component"><div class="component-label">Starting material</div><div class="image-slot"><img id="start" alt="Starting structure"></div></div>
-<div class="component middle"><div class="component-label">Reagents</div><div class="image-slot"><img id="reagents" alt="Reaction reagents"><div class="missing" id="missing-reagents" hidden><span>?</span><small>Find the reagents</small></div></div></div>
-<div class="component"><div class="component-label">Product</div><div class="image-slot"><img id="product" alt="Product structure"><div class="missing" id="missing-product" hidden><span>?</span><small>Find the product</small></div></div></div>
-</div>
+<div class="diagram-scroll" tabindex="0" aria-label="Reaction diagram. Scroll horizontally on small screens.">
+<svg id="reaction" viewBox="0 0 745 180" role="img" aria-label="Reaction with a missing component" xmlns="http://www.w3.org/2000/svg">
+<image id="reaction-image" width="745" height="180" href=""/>
+<g id="mask"><rect id="mask-cover" fill="white"/><rect id="mask-box" y="45" height="90" rx="10" fill="#f6f9f4" stroke="#a9bfae" stroke-dasharray="5 5"/><text id="mask-label" y="96" text-anchor="middle" fill="#466b51" font-family="system-ui,sans-serif" font-size="19">?</text></g>
+</svg></div><p class="scroll-hint">Swipe across to see the full reaction.</p>
 <div class="action-area"><button class="primary" id="reveal">Reveal answer <kbd>Space</kbd></button></div>
 <div id="solution" hidden><div class="rating-heading"><h3>How confident were you?</h3><span>Rate to continue</span></div><div class="ratings">
 <button data-rating="1"><kbd>1</kbd><strong>25%</strong><span>Needs work</span></button><button data-rating="2"><kbd>2</kbd><strong>50%</strong><span>Getting there</span></button><button data-rating="3"><kbd>3</kbd><strong>75%</strong><span>Almost solid</span></button><button data-rating="4"><kbd>4</kbd><strong>100%</strong><span>Solid</span></button>
