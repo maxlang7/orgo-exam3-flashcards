@@ -11,7 +11,7 @@ const settingsKey = 'orgo-exam3-settings-v1';
 const options = {mode: 'mixed', topic: 'all', order: 'adaptive'};
 try {
   const stored = JSON.parse(localStorage.getItem(settingsKey));
-  for (const [name, allowed] of Object.entries({mode: ['mixed','reagents','product'], topic: ['all','alkenes','alkynes','alcohols','halides','epoxides','carbonyls'], order: ['adaptive','random']})) {
+  for (const [name, allowed] of Object.entries({mode: ['mixed','reagents','product','mechanism'], topic: ['all','alkenes','alkynes','alcohols','halides','epoxides','carbonyls'], order: ['adaptive','random']})) {
     if (stored && allowed.includes(stored[name])) options[name] = stored[name];
   }
 } catch {}
@@ -23,13 +23,19 @@ try {
   if (Array.isArray(saved)) selected = new Set(saved.filter(id => deck.some(card => card.id === id)));
 } catch {}
 function activeDeck() { return deck.filter(card => selected.has(card.id)); }
-function updateProgress() {
-  $('progress').textContent = `${activeDeck().filter(card => state[card.id]).length} / ${activeDeck().length} reactions rated`;
+function practiceDeck() {
+  const cards = activeDeck();
+  return options.mode === 'mechanism' ? cards.filter(card => mechanismFor(card.id)) : cards;
 }
-let current, mode, revealed = false, last = null, count = 0;
+function updateProgress() {
+  const pool = practiceDeck();
+  const noun = options.mode === 'mechanism' ? 'mechanisms' : 'reactions';
+  $('progress').textContent = `${pool.filter(card => state[card.id]).length} / ${pool.length} ${noun} rated`;
+}
+let current, mode, revealed = false, last = null, count = 0, attempt = null, advanceTimer = 0, advanceToken = 0;
 function save() { try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }
 function choose() {
-  const available = activeDeck();
+  const available = practiceDeck();
   const candidates = available.length > 1 ? available.filter(card => card.id !== last) : available;
   const weights = candidates.map(card => options.order === 'random' ? 1 : [8, 5, 3, 1][(state[card.id] || 1) - 1]);
   let pick = Math.random() * weights.reduce((sum, weight) => sum + weight, 0);
@@ -51,25 +57,74 @@ function drawReaction() {
   updateVisibility();
 }
 function next() {
+  clearTimeout(advanceTimer);
   revealed = false;
   updateProgress();
-  $('empty-selection').hidden = activeDeck().length > 0;
-  $('study-card').hidden = activeDeck().length === 0;
-  if (!activeDeck().length) { current = null; return; }
+  const pool = practiceDeck();
+  const noSelection = activeDeck().length === 0;
+  const noMechanism = options.mode === 'mechanism' && !noSelection && pool.length === 0;
+  $('empty-selection').hidden = !noSelection && !noMechanism;
+  $('empty-selection').textContent = noMechanism
+    ? 'Grignard plus ketone is the only mechanism so far. Select it above to practice the arrows.'
+    : 'Select at least one reaction above to start practicing.';
+  $('study-card').hidden = pool.length === 0;
+  if (!pool.length) { current = null; return; }
   current = choose(); last = current.id; count++;
+  $('original-notes').open = false;
+  $('answer').src = current.image;
+  $('session-count').textContent = `Practice ${String(count).padStart(2, '0')}`;
+  updateProgress();
+  if (options.mode === 'mechanism') { startMechanism(); return; }
+  attempt = null;
+  $('mechanism').hidden = true;
+  $('practice-content').hidden = false;
   mode = options.mode === 'mixed' ? (Math.random() < .5 ? 'reagents' : 'product') : options.mode;
   $('mode-label').textContent = mode === 'reagents' ? 'Recall the conditions' : 'Predict the product';
   $('question').textContent = mode === 'reagents' ? 'What reagents and conditions are needed?' : 'What product forms?';
+  $('instruction').textContent = 'Work it out before revealing the answer.';
   $('solution').hidden = true; $('reveal').hidden = false;
-  $('original-notes').open = false;
-  updateProgress();
-  $('session-count').textContent = `Practice ${String(count).padStart(2, '0')}`;
   drawReaction();
-  $('answer').src = current.image;
   updateVisibility();
 }
+function startMechanism() {
+  attempt = createAttempt(mechanismFor(current.id));
+  $('practice-content').hidden = true;
+  $('mechanism').hidden = false;
+  $('reveal').hidden = true;
+  $('mode-label').textContent = 'Draw the mechanism';
+  $('question').textContent = current.name;
+  paintMechanism();
+}
+function paintMechanism() {
+  const view = attempt.view();
+  $('instruction').textContent = view.prompt;
+  $('mech-source').textContent = view.source;
+  $('mech-status').textContent = view.status;
+  $('mech-status').classList.toggle('is-bad', view.bad);
+  $('mech-undo').disabled = !view.canUndo;
+  $('mech-show').hidden = view.finished || (view.stepComplete && !view.peeked);
+  $('mech-show').textContent = view.peeked ? 'Continue' : 'Show this step';
+  $('solution').hidden = !view.finished;
+  if (view.finished) revealed = true;
+  renderMechanism($('mech-svg'), view);
+}
+function scheduleAdvance() {
+  const token = ++advanceToken;
+  clearTimeout(advanceTimer);
+  advanceTimer = setTimeout(() => {
+    if (token !== advanceToken || !attempt) return;
+    attempt.advance();
+    paintMechanism();
+  }, 650);
+}
+function onMechanismAtom(id) {
+  if (!attempt) return;
+  const result = attempt.click(id);
+  paintMechanism();
+  if (result.doneStep) scheduleAdvance();
+}
 function reveal() {
-  if (!current || revealed) return;
+  if (options.mode === 'mechanism' || !current || revealed) return;
   revealed = true; updateVisibility();
   $('solution').hidden = false; $('reveal').hidden = true;
 }
@@ -126,16 +181,54 @@ for (const [topic, name] of Object.entries(groupNames)) {
     const label = document.createElement('label'); label.className = 'reaction-choice';
     const input = document.createElement('input'); input.type = 'checkbox'; input.checked = selected.has(card.id);
     input.onchange = () => { input.checked ? selected.add(card.id) : selected.delete(card.id); selectionChanged(); };
-    label.append(input, document.createTextNode(card.name)); group.append(label); cardInputs.set(card.id, input);
+    label.append(input, document.createTextNode(card.name));
+    if (mechanismFor(card.id)) {
+      const tag = document.createElement('span');
+      tag.className = 'mech-tag';
+      tag.textContent = 'mechanism';
+      label.append(tag);
+    }
+    group.append(label); cardInputs.set(card.id, input);
   }
   $('reaction-checklist').append(group);
 }
 $('select-all').onclick = () => { selected = new Set(deck.map(card => card.id)); selectionChanged(); };
 $('clear-all').onclick = () => { selected.clear(); selectionChanged(); };
 selectionChanged();
+$('mech-svg').addEventListener('click', event => {
+  const atom = event.target.closest('.atom');
+  if (atom) onMechanismAtom(atom.dataset.id);
+});
+$('mech-svg').addEventListener('keydown', event => {
+  const atom = event.target.closest && event.target.closest('.atom');
+  if (!atom || (event.key !== 'Enter' && event.key !== ' ')) return;
+  event.preventDefault();
+  event.stopPropagation();
+  onMechanismAtom(atom.dataset.id);
+});
+$('mech-undo').onclick = () => {
+  if (!attempt) return;
+  advanceToken++;
+  clearTimeout(advanceTimer);
+  attempt.undo();
+  paintMechanism();
+};
+$('mech-show').onclick = () => {
+  if (!attempt) return;
+  advanceToken++;
+  clearTimeout(advanceTimer);
+  if (attempt.view().peeked) attempt.continueAfterPeek();
+  else attempt.reveal();
+  paintMechanism();
+};
 document.addEventListener('keydown', event => {
   if (['SELECT', 'INPUT', 'TEXTAREA'].includes(event.target.tagName) || event.target.isContentEditable) return;
+  if (event.target.closest && event.target.closest('#mech-svg')) return;
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+  if (options.mode === 'mechanism') {
+    if (revealed && /^[1-4]$/.test(event.key)) { event.preventDefault(); rate(Number(event.key)); }
+    return;
+  }
   if (event.code === 'Space' && event.target.tagName !== 'SUMMARY') { event.preventDefault(); reveal(); }
   else if (/^[1-4]$/.test(event.key)) { event.preventDefault(); rate(Number(event.key)); }
 });

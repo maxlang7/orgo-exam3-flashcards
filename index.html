@@ -4,7 +4,7 @@
 <body><main>
 <header><div class="eyebrow">09-219 · EXAM III</div><h1>Reaction practice<span>.</span></h1><p>Build confidence, one reaction at a time.</p></header>
 <section class="practice-options" aria-label="Practice options">
-<label for="practice-mode">Practice<select id="practice-mode"><option value="mixed">Conditions & products</option><option value="reagents">Conditions only</option><option value="product">Products only</option></select></label>
+<label for="practice-mode">Practice<select id="practice-mode"><option value="mixed">Conditions & products</option><option value="reagents">Conditions only</option><option value="product">Products only</option><option value="mechanism">Mechanisms</option></select></label>
 
 <label for="practice-order">Card selection<select id="practice-order"><option value="adaptive">Prioritize low confidence</option><option value="random">Equal chance for every card</option></select></label>
 </section>
@@ -23,10 +23,18 @@
 <image id="reaction-image" width="745" height="180" href=""/>
 <g id="mask"><rect id="mask-cover" fill="white"/><rect id="mask-box" y="45" height="90" rx="10" fill="#f6f9f4" stroke="#a9bfae" stroke-dasharray="5 5"/><text id="mask-label" y="96" text-anchor="middle" fill="#466b51" font-family="system-ui,sans-serif" font-size="19">?</text></g>
 </svg></div><p class="scroll-hint">Swipe across to see the full reaction.</p>
-<div class="action-area"><button class="primary" id="reveal">Reveal answer <kbd>Space</kbd></button></div>
+<div class="action-area"><button class="primary" id="reveal">Reveal answer <kbd>Space</kbd></button></div></div>
+<div id="mechanism" hidden>
+<p id="mech-source" class="mech-source"></p>
+<div class="diagram-scroll" tabindex="0" aria-label="Mechanism drawing. Scroll horizontally on small screens.">
+<svg id="mech-svg" viewBox="0 0 760 360" role="group" aria-label="Mechanism. Click the atom the electrons leave, then the atom they go to."></svg>
+</div>
+<p id="mech-status" role="status"></p>
+<div class="mech-actions"><button type="button" class="quiet" id="mech-undo">Undo</button><button type="button" class="quiet" id="mech-show">Show this step</button></div>
+</div>
 <div id="solution" hidden><div class="rating-heading"><h3>How confident were you?</h3><span>Rate to continue</span></div><div class="ratings">
 <button data-rating="1"><kbd>1</kbd><strong>25%</strong><span>Needs work</span></button><button data-rating="2"><kbd>2</kbd><strong>50%</strong><span>Getting there</span></button><button data-rating="3"><kbd>3</kbd><strong>75%</strong><span>Almost solid</span></button><button data-rating="4"><kbd>4</kbd><strong>100%</strong><span>Solid</span></button>
-</div><details id="original-notes"><summary>View original reaction & notes</summary><img id="answer" alt="Original reaction sheet entry"></details></div></div>
+</div><details id="original-notes"><summary>View original reaction & notes</summary><img id="answer" alt="Original reaction sheet entry"></details></div>
 </section>
 <footer><p id="feedback" role="status">Lower confidence brings a reaction back more often.</p><span>Progress saved on this device</span></footer>
-</main><script src="deck.js"></script><script src="app.js"></script></body></html>
+</main><script src="deck.js"></script><script src="mechanisms.js"></script><script src="app.js"></script></body></html>
