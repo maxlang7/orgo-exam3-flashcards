@@ -57,9 +57,9 @@ function mechanismInner(scene, state) {
   const separators = scene.texts.filter(item => item.className === 'mech-plus').map(drawText).join('');
   if (state.static) return molecules + separators;
   const routedPoints = [];
-  const paths = arrows.map(arrow => {
+  const paths = arrows.map((arrow, index) => {
     const curve = curvedArrow(scene, arrow.from, arrow.to, routedPoints);
-    const kind = state.locked ? 'good' : 'draft';
+    const kind = index === state.mistakeIndex ? 'mistake' : state.locked ? 'good' : 'draft';
     const motion = shifts.size ? feedbackTrack('d', t =>
       arrowPathData(curve, shifts.get(groupOf(arrow.from)), shifts.get(groupOf(arrow.to)), t)) : '';
     return `<path class="mech-arrow is-${kind}" d="${arrowPathData(curve)}" marker-end="url(#arrow-${kind})">${motion}</path>`;
@@ -68,6 +68,7 @@ function mechanismInner(scene, state) {
 
 <marker id="arrow-good" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" fill="#285b40"/></marker>
 <marker id="arrow-draft" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" fill="#475569"/></marker>
+<marker id="arrow-mistake" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" fill="#a1382b"/></marker>
 </defs><g class="${state.locked ? 'is-locked' : ''} ${state.motion === 'incorrect' ? 'shake' : ''}">${molecules}${separators}${paths}</g>`;
 }
 

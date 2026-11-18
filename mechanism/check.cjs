@@ -84,10 +84,10 @@ for (const mechanism of catalog) {
           assert(context.distance(curve[3], midpoint) < 0.01);
         }
         drawn.to = arrow.atomTarget;
-        assert(context.matchesDrawing(choice, drawing), 'Existing atom endpoint must still grade correctly');
+        assert.equal(context.compareDrawing(choice, drawing).unmatched.length, 0, 'Existing atom endpoint must still grade correctly');
         const otherBond = scene.bonds.map(([a,b]) => context.bondId(a,b)).find(id => id !== arrow.to);
         drawn.to = otherBond;
-        assert(!context.matchesDrawing(choice, drawing), 'A different bond must not earn credit');
+        assert.equal(context.compareDrawing(choice, drawing).unmatched.length, 1, 'A different bond must not earn credit');
       }
     }
     const view = attempt.view();
@@ -173,3 +173,38 @@ edit.click('bond:cCO|oCO'); edit.click('oCO');
 assert(!edit.view().locked);
 edit.check();
 assert(edit.view().stepComplete);
+
+// The hint follows the submitted arrow even if its destination and the other arrow are correct.
+for (const [cardId, stepIndex, carbon, magnesium] of [
+  [39, 0, 'cAlpha', 'mg'], [40, 0, 'cAlpha', 'mg'], [41, 0, 'cAlpha', 'mg'],
+  [42, 0, 'cAlpha', 'mg'], [42, 2, 'cA2', 'mg2']
+]) {
+  const attempt = context.createAttempt(context.mechanismFor(cardId));
+  for (let i = 0; i < stepIndex; i++) { attempt.reveal(); attempt.advance(); }
+  attempt.click('bond:cCO|oCO'); attempt.click('oCO');
+  attempt.check();
+  assert.match(attempt.view().status, /one more arrow/);
+  assert.equal(attempt.view().mistakeIndex, undefined);
+  attempt.click(carbon); attempt.click('cCO');
+  assert.equal(attempt.view().status, '');
+  assert.equal(attempt.check(), 'incorrect');
+  assert.match(attempt.view().status, /Arrow 2.*C–Mg bond supplies the electron pair/);
+  assert.equal(attempt.view().mistakeIndex, 1);
+  attempt.undo();
+  assert.equal(attempt.view().status, '');
+  attempt.click(context.bondId(carbon, magnesium)); attempt.click('cCO');
+  assert.equal(attempt.check(), 'correct');
+}
+for (const [drawing, message] of [
+  [[['cCO','oCO']], /π bond/],
+  [[['cCO','bond:cAlpha|mg']], /backward/],
+  [[['bond:cAlpha|mg','oCO']], /starts in the right place/],
+  [[['bond:cCO|oCO','oCO'], ['bond:cCO|oCO','oCO']], /repeats an earlier arrow/],
+]) {
+  const attempt = context.createAttempt(context.mechanismFor(41));
+  for (const [from,to] of drawing) { attempt.click(from); attempt.click(to); }
+  assert.equal(attempt.check(), 'incorrect');
+  assert.match(attempt.view().status, message);
+  attempt.reveal();
+  assert.equal(attempt.view().mistakeIndex, undefined);
+}
