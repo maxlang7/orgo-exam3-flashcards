@@ -94,7 +94,15 @@ function startMechanism() {
   $('mechanism').classList.remove('zoomed');
   $('mech-zoom').setAttribute('aria-pressed', 'false');
   $('mech-zoom').textContent = 'Enlarge drawing';
-  attempt = createAttempt(mechanismFor(current.id));
+  const mechanism = mechanismFor(current.id);
+  attempt = createAttempt(mechanism);
+  $('mech-overview').open = true;
+  renderReagentRoutes($('mech-scheme'), current, 'mechanism', true, mechanism);
+  $('mech-stages').replaceChildren(...mechanism.steps.map(step => {
+    const item = document.createElement('li');
+    item.textContent = step.title;
+    return item;
+  }));
   $('practice-content').hidden = true;
   $('mechanism').hidden = false;
   $('reveal').hidden = true;
@@ -107,6 +115,10 @@ function paintMechanism(outcome) {
   renderMechanism($('mech-svg'), view, outcome);
   $('instruction').textContent = view.prompt;
   $('mech-step').textContent = view.finished ? 'Product' : `Step ${view.stepNumber} of ${view.stepCount}`;
+  Array.from($('mech-stages').children).forEach((item, index) => {
+    if (!view.finished && index + 1 === view.stepNumber) item.setAttribute('aria-current', 'step');
+    else item.removeAttribute('aria-current');
+  });
   $('mech-flow').hidden = view.locked;
   $('mech-from').classList.toggle('active', !view.selectedId);
   $('mech-to').classList.toggle('active', Boolean(view.selectedId));

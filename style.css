@@ -100,6 +100,13 @@ progress::-moz-progress-bar { background:var(--green); }
 kbd { font:inherit; font-size:10px; font-weight:500; border:1px solid currentColor; border-radius:3px; padding:1px 4px; }
 .primary kbd { color:#cfe2d7; }
 #mech-zoom, .diagram-size { display:none; }
+#mech-overview { margin-top:16px; border-block:1px solid var(--line); padding:10px 0; }
+#mech-overview > summary { color:var(--green); font-size:14px; font-weight:650; }
+.overview-scroll { overflow-x:auto; }
+#mech-scheme { display:block; width:100%; height:auto; }
+#mech-stages { display:flex; flex-wrap:wrap; column-gap:1.8em; row-gap:4px; margin:0 0 3px; padding-left:1.5em; font-size:13px; color:var(--muted); }
+#mech-stages li::marker { font-variant-numeric:tabular-nums; }
+#mech-stages li[aria-current] { color:var(--green); font-weight:700; }
 .mech-guide { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:20px; padding:13px 16px; background:var(--tint); border-radius:6px 6px 0 0; }
 .step-heading, #mech-flow { display:flex; align-items:baseline; gap:12px; }
 #mech-step, #mech-flow { font-size:12px; color:var(--muted); }
@@ -139,10 +146,12 @@ footer > span { margin-left:auto; flex-shrink:0; }
   .practice-options { margin:14px 0; grid-template-columns:1fr 1fr; }
   #mech-zoom, .diagram-size { display:block; font-size:12px; text-decoration:underline; padding:6px; }
   .diagram-size { margin:0 0 8px auto; }
-  .zoomed #mech-svg, .zoomed #reaction { min-width:680px; }
+  .zoomed #mech-svg, .zoomed #mech-scheme, .zoomed #reaction { min-width:680px; }
   #mech-svg { height:auto; max-height:500px; min-height:180px; }
 }
 @media(max-width:540px) {
+  #mech-scheme .atom-label { font-size:28px; }
+  #mech-scheme .bond { stroke-width:3; }
   .route-label { font-size:22px; }
   .route-name { font-size:15px; }
   main { padding-inline:14px; }

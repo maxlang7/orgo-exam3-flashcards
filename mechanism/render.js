@@ -29,6 +29,7 @@ function mechanismInner(scene, state) {
     const body = atom.label
       ? `<text class="atom-label el-${element}" x="${atom.x}" y="${atom.y}" text-anchor="middle" dy="0.35em">${escapeXml(atom.label)}</text>`
       : '';
+    if (state.static) return body;
     return `<g class="atom${selected}" data-id="${atom.id}" tabindex="${state.locked ? -1 : 0}" role="button" aria-label="${escapeXml(atomNames.get(atom.id))}"><circle class="atom-ring" cx="${atom.x}" cy="${atom.y}" r="${radius - 2}"/>${body}<circle class="atom-hit" cx="${atom.x}" cy="${atom.y}" r="${radius}"/></g>`;
   }
   const owner = new Map();
@@ -50,9 +51,11 @@ function mechanismInner(scene, state) {
     const bonds = scene.bonds.filter(([from]) => owner.get(from) === group);
     const shift = shifts.get(group);
     const motion = shift ? feedbackTrack('translate', t => `${shift.x*t} ${shift.y*t}`) : '';
-    return `<g class="molecule">${motion}${bonds.map(drawHit).join('')}${bonds.map(drawBond).join('')}${group.atoms.map(drawAtom).join('')}${group.caption ? drawText(group.caption) : ''}</g>`;
+    const hits = state.static ? '' : bonds.map(drawHit).join('');
+    return `<g class="molecule">${motion}${hits}${bonds.map(drawBond).join('')}${group.atoms.map(drawAtom).join('')}${group.caption ? drawText(group.caption) : ''}</g>`;
   }).join('');
   const separators = scene.texts.filter(item => item.className === 'mech-plus').map(drawText).join('');
+  if (state.static) return molecules + separators;
   const routedPoints = [];
   const paths = arrows.map(arrow => {
     const curve = curvedArrow(scene, arrow.from, arrow.to, routedPoints);

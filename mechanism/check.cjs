@@ -8,8 +8,25 @@ for (const file of ['layout.js','geometry.js','catalog.js','render.js','../mecha
   vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
 }
 const catalog = vm.runInContext('mechanisms', context);
+// Exercise the same reaction overview rendered before the first practice step.
+for (const file of ['../deck.js', '../reagent-routes.js']) {
+  vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
+}
+const cards = vm.runInContext('deck', context);
+const routes = vm.runInContext('reagentRoutes', context);
 let scenes = 0;
 for (const mechanism of catalog) {
+  assert(mechanism.steps.every(step => step.title?.trim()), 'Each stage needs a visible name');
+  const conditions = mechanism.overview.conditions ?? routes.get(mechanism.cardId)[0];
+  assert(cards.some(card => card.id === mechanism.cardId) && conditions[0]);
+  const fragments = [];
+  context.appendMechanismStructures({append: node => fragments.push(node)}, () => ({}),
+    mechanism, [[8, 140], [425, 167]], 132);
+  assert.equal(fragments.length, 2);
+  for (const node of fragments) {
+    assert(node.innerHTML.includes('class="molecule"'));
+    assert(!/data-id=|class="mech-arrow|tabindex=|\b(?:NaN|Infinity)\b/.test(node.innerHTML));
+  }
   for (const scene of Object.values(mechanism.scenes)) {
     scenes++;
     assert(!scene.texts, 'Free-positioned text in a chemistry scene');

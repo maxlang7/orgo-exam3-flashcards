@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reaction Flashcard Trainer</title><link rel="stylesheet" href="style.css?v=schemes-2"><link rel="stylesheet" href="mechanism/drawing.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reaction Flashcard Trainer</title><link rel="stylesheet" href="style.css?v=overview-1"><link rel="stylesheet" href="mechanism/drawing.css"></head>
 <body><main>
 <header><h1>Reaction Flashcard Trainer</h1><p>09-219 Organic Chemistry <span aria-hidden="true">·</span> Exam III</p></header>
 <div class="workbench"><aside class="settings"><details id="settings-panel" open><summary>Practice settings</summary><section class="practice-options" aria-label="Practice options">
@@ -25,6 +25,13 @@
 </svg></div><button type="button" class="quiet diagram-size" id="reaction-zoom" aria-pressed="false">Enlarge diagram</button>
 <div class="action-area"><button class="primary" id="reveal">Reveal answer <kbd>Space</kbd></button></div></div>
 <div id="mechanism" hidden>
+<details id="mech-overview" open>
+  <summary>Full reaction</summary>
+  <div class="overview-scroll" tabindex="0" aria-label="Overall reaction diagram">
+    <svg id="mech-scheme" role="img" viewBox="0 0 600 132"></svg>
+  </div>
+  <ol id="mech-stages" aria-label="Mechanism steps"></ol>
+</details>
 <p id="mech-companions" hidden></p><p id="mech-status" role="status"></p>
 <div class="mech-guide"><div class="step-heading"><span id="mech-step"></span><strong id="arrow-count"></strong></div><button class="quiet" type="button" id="mech-zoom" aria-pressed="false">Enlarge drawing</button><div id="mech-flow"><span id="mech-from">Electron source</span><span aria-hidden="true">→</span><span id="mech-to">Destination atom</span></div></div>
 <div class="diagram-scroll" tabindex="0" aria-label="Mechanism drawing. Scroll horizontally on small screens.">
@@ -37,4 +44,4 @@
 </div><details id="original-notes"><summary>View original reaction &amp; notes</summary><img id="answer" alt="Original reaction sheet entry"></details></div>
 </section>
 <footer><p id="feedback" role="status"></p><span>Progress saved on this device</span></footer>
-</div></div></main><script src="deck.js"></script><script src="reagent-routes.js?v=schemes-2"></script><script src="mechanism/layout.js"></script><script src="mechanism/geometry.js"></script><script src="mechanism/render.js"></script><script src="mechanism/catalog.js?v=chloride-2"></script><script src="mechanisms.js"></script><script src="app.js?v=schemes-2"></script></body></html>
+</div></div></main><script src="deck.js"></script><script src="reagent-routes.js?v=overview-1"></script><script src="mechanism/layout.js?v=overview-1"></script><script src="mechanism/geometry.js"></script><script src="mechanism/render.js?v=overview-1"></script><script src="mechanism/catalog.js?v=overview-1"></script><script src="mechanisms.js"></script><script src="app.js?v=overview-1"></script></body></html>

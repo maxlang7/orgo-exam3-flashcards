@@ -73,5 +73,5 @@ function layoutScene(source, compact) {
   }
   const width = stack ? cross : offset-gap;
   const height = stack ? offset-gap : cross;
-  return {atoms, bonds:source.bonds, texts, molecules, viewBox:`-45 -45 ${width+90} ${height+90}`};
+  return {atoms, bonds:source.bonds, texts, molecules, width, height, viewBox:`-45 -45 ${width+90} ${height+90}`};
 }

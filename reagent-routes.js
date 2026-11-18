@@ -60,8 +60,9 @@ const reagentRoutes = (() => {
   ]);
 })();
 
-function renderReagentRoutes(svg, card, mode, revealed) {
-  const routes = reagentRoutes.get(card.id);
+function renderReagentRoutes(svg, card, mode, revealed, mechanism) {
+  const cardRoutes = reagentRoutes.get(card.id);
+  const routes = mechanism ? [mechanism.overview.conditions ?? cardRoutes[0]] : cardRoutes;
   const ns = 'http://www.w3.org/2000/svg';
   const node = (tag, attributes = {}, text) => {
     const element = document.createElementNS(ns, tag);
@@ -70,22 +71,27 @@ function renderReagentRoutes(svg, card, mode, revealed) {
     return element;
   };
   const rowHeight = 106;
-  const height = Math.max(180, routes.length * rowHeight + 16);
+  const height = mechanism ? 132 : Math.max(180, routes.length * rowHeight + 16);
   const width = 600;
   // Crop in the whitespace between each substrate and its printed conditions.
   const left = ({9: 80, 13: 115, 19: 110, 20: 110, 21: 110, 22: 110})[card.id] ?? 94;
-  const right = 375;
-  const startX = 115;
-  const endX = 365;
+  const right = mechanism ? 425 : 375;
+  const startX = mechanism ? 160 : 115;
+  const endX = startX + 250;
   const centerX = (startX + endX) / 2;
-  const group = node('g', {id: 'alternative-routes'});
+  const group = node('g', mechanism ? {} : {id: 'alternative-routes'});
   const fragment = (x, cropX, cropWidth) => {
     const viewport = node('svg', {x, y: height / 2 - 90, width: cropWidth, height: 180, viewBox: `${cropX} 0 ${cropWidth} 180`, overflow: 'hidden'});
     viewport.append(node('image', {href: card.reaction, width: 745, height: 180}));
     group.append(viewport);
   };
-  fragment(0, 0, left);
-  if (mode !== 'product' || revealed) fragment(right, card.masks.product[0], width - right);
+  if (mechanism) {
+    appendMechanismStructures(group, node, mechanism, [[8, startX - 20], [right, width - right - 8]], height);
+    svg.setAttribute('aria-label', [card.name, ...routes[0].slice(0, 2)].join('. '));
+  } else {
+    fragment(0, 0, left);
+    if (mode !== 'product' || revealed) fragment(right, card.masks.product[0], width - right);
+  }
   if (mode !== 'reagents' || revealed) {
     routes.forEach(([above, below, {name, reverseArrow} = {}], index) => {
       const top = (height - routes.length * rowHeight) / 2 + 6 + index * rowHeight;
@@ -113,4 +119,30 @@ function renderReagentRoutes(svg, card, mode, revealed) {
   }
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   svg.replaceChildren(group);
+}
+
+function appendMechanismStructures(group, node, mechanism, slots, height) {
+  const {overview, scenes, doneScene} = mechanism;
+  // A few exercises start with reagent preparation or an activated intermediate.
+  // Otherwise the leftmost molecule in the reactant scene is the substrate.
+  let substrate = overview.substrate;
+  if (!substrate) {
+    const atoms = moleculeGroups(scenes.reactants)[0];
+    const ids = new Set(atoms.map(atom => atom.id));
+    substrate = {
+      atoms, bonds: scenes.reactants.bonds.filter(([from]) => ids.has(from)),
+      annotations: scenes.reactants.annotations
+    };
+  }
+  const molecules = [substrate, scenes[doneScene]].map(scene => layoutScene(scene, false));
+  const scale = Math.min(0.75, ...molecules.map((scene, i) =>
+    Math.min(slots[i][1] / scene.width, (height - 12) / scene.height)));
+  molecules.forEach((scene, i) => {
+    const [x, w] = slots[i];
+    const {width: molWidth, height: molHeight} = scene;
+    const offsetX = i === 0 ? x + w - molWidth * scale : x;
+    const drawing = node('g', {transform: `translate(${offsetX} ${(height - molHeight * scale) / 2}) scale(${scale})`});
+    drawing.innerHTML = mechanismInner(scene, {static: true});
+    group.append(drawing);
+  });
 }
