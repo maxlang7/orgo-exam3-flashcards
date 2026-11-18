@@ -84,6 +84,16 @@ for (const [cardId, intermediate] of [[32,'opened'], [33,'alkoxide'], [34,'alkox
       'Terminal methylene is not stereogenic');
   }
 }
+for (const bonded of ['cl1', 'cl2']) {
+  for (const destination of ['cl1', 'cl2']) {
+    const attempt = context.createAttempt(context.mechanismFor(21));
+    attempt.click('bond:' + bonded + '|sC');
+    attempt.click(destination);
+    attempt.click('oH');
+    attempt.click('sC');
+    assert.equal(attempt.check(), bonded === destination ? 'correct' : 'incorrect');
+  }
+}
 const osmium = context.mechanismFor(8);
 for (const [key,orders] of [['reactants','2222'],['osmate','1122']]) {
   const scene = osmium.scenes[key];

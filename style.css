@@ -11,6 +11,7 @@
   font-display: swap;
 }
 :root {
+  scrollbar-gutter:stable;
   --paper: #f7f6f0;
   --ink: #1b302e;
   --muted: #596861;
@@ -85,7 +86,6 @@ progress::-moz-progress-bar { background:var(--green); }
 .diagram-scroll { overflow-x:auto; overscroll-behavior-x:contain; background:white; }
 #practice-content .diagram-scroll { margin:18px 0; padding:12px 0; }
 #reaction, #mech-svg { display:block; width:100%; height:auto; }
-#mask-label { font-family:"DM Sans",system-ui,sans-serif; fill:var(--green); }
 .route-label { font:18px "DM Sans",system-ui,sans-serif; fill:#18241e; }
 .route-name { font:600 12px "DM Sans",system-ui,sans-serif; fill:var(--green); }
 .route-arrow { fill:none; stroke:#18241e; stroke-width:1.4; }
@@ -143,6 +143,8 @@ footer > span { margin-left:auto; flex-shrink:0; }
   #mech-svg { height:auto; max-height:500px; min-height:180px; }
 }
 @media(max-width:540px) {
+  .route-label { font-size:22px; }
+  .route-name { font-size:15px; }
   main { padding-inline:14px; }
   .practice-options { grid-template-columns:1fr; }
   .study-card { padding:18px 14px; }

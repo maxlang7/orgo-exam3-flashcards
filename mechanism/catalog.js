@@ -934,7 +934,7 @@ function buildMechanisms() {
     const s = A('sC', [470, 170], {shorthand: 'SOCl₂', label: 'S', element: 'S', name: 'sulfur of thionyl chloride', pad: 16});
     const oS = sprout(s, 90, {id: 'oS', label: 'O', element: 'O', name: 'the oxygen on sulfur', pad: 16}, 56);
     const cl1 = sprout(s, 15, {id: 'cl1', label: 'Cl', element: 'Cl', name: 'a chlorine on sulfur', pad: 16}, 60);
-    const cl2 = sprout(s, -60, {id: 'cl2', label: 'Cl', element: 'Cl', name: 'the chlorine that leaves', pad: 16}, 60);
+    const cl2 = sprout(s, -60, {id: 'cl2', label: 'Cl', element: 'Cl', name: 'a chlorine on sulfur', pad: 16}, 60);
     const reactants = join(alcohol, {atoms: [s, oS, cl1, cl2], bonds: [['sC', 'oS', 2], ['sC', 'cl1', 1], ['sC', 'cl2', 1]]});
     const chain = zz([
       {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22},
@@ -949,10 +949,10 @@ function buildMechanisms() {
       'The product is the chloroalkane.',
       {reactants, subst, product: primary(180, 230, {id: 'clP', label: 'Cl', element: 'Cl', name: 'the chlorine on carbon', pad: 16})},
       [
-        step('reactants', 'Oxygen attacks sulfur and one chloride leaves. This step takes 2 arrows.', [
-          lone('sC', 'oH'),
-          leave('cl2', 'sC', 'cl2')
-        ]),
+        step('reactants', 'Oxygen attacks sulfur and one chloride leaves. This step takes 2 arrows.',
+          ['cl2', 'cl1'].map(chloride => ({arrows: [
+            lone('sC', 'oH'), leave(chloride, 'sC', chloride)
+          ]}))),
         step('subst', 'Chloride attacks carbon and the carbon-oxygen bond breaks. This step takes 2 arrows.', [
           lone('c3', 'cl2'),
           leave('oH', 'c3', 'oH')

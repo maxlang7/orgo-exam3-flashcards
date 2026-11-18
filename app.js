@@ -51,28 +51,11 @@ function choose() {
   return candidates.find((card, index) => (pick -= weights[index]) < 0) || candidates.at(-1);
 }
 function updateVisibility() {
-  const alternatives = current && reagentRoutes.has(current.id);
-  $('reaction-image').style.display = alternatives ? 'none' : '';
-  if (alternatives) {
-    $('mask').style.display = 'none';
-    renderReagentRoutes($('reaction'), current, mode, revealed);
-    return;
-  }
-  $('alternative-routes')?.remove();
-  $('reaction').setAttribute('viewBox', '0 0 745 180');
-  $('mask').hidden = revealed;
-  $('mask').style.display = revealed ? 'none' : '';
-}
-function drawReaction() {
-  $('reaction-image').setAttribute('href', current.reaction);
-  const [x, y, width, height] = current.masks[mode];
-  for (const [name, value] of Object.entries({x, y, width, height})) $('mask-cover').setAttribute(name, value);
-  $('mask-box').setAttribute('x', x + 12);
-  $('mask-box').setAttribute('width', width - 24);
-  $('mask-label').setAttribute('x', x + width / 2);
-  $('mask-label').textContent = mode === 'reagents' ? '? Conditions' : '? Product';
-  $('reaction').setAttribute('aria-label', mode === 'reagents' ? 'Starting structure and product. Work out the reagents.' : 'Starting structure and reagents. Work out the product.');
-  updateVisibility();
+  const label = revealed ? 'Complete reaction with reagents and products.' : mode === 'reagents'
+    ? 'Starting structure and product. Work out the reagents.'
+    : 'Starting structure and reagents. Work out the product.';
+  $('reaction').setAttribute('aria-label', label);
+  renderReagentRoutes($('reaction'), current, mode, revealed);
 }
 function next(requestedId) {
   $('feedback').hidden = options.mode === 'mechanism';
@@ -100,12 +83,11 @@ function next(requestedId) {
   mode = options.mode === 'mixed' ? (Math.random() < .5 ? 'reagents' : 'product') : options.mode;
   $('mode-label').textContent = mode === 'reagents' ? 'Conditions' : 'Product recall';
   $('question').textContent = mode === 'reagents' ? 'What reagents and conditions are needed?' : 'What product forms?';
-  $('instruction').textContent = mode === 'reagents' && reagentRoutes.has(current.id) ? 'Give any one valid set of conditions.' : '';
+  $('instruction').textContent = mode === 'reagents' && reagentRoutes.get(current.id).length > 1 ? 'Give any one valid set of conditions.' : '';
   $('practice-content').classList.remove('zoomed');
   $('reaction-zoom').textContent = 'Enlarge diagram';
   $('reaction-zoom').setAttribute('aria-pressed', 'false');
   $('solution').hidden = true; $('reveal').hidden = false;
-  drawReaction();
   updateVisibility();
 }
 function startMechanism() {
