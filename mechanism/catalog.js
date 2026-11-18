@@ -1545,7 +1545,7 @@ function buildMechanisms() {
       ],
       bonds: [['meL', 'cCO', 1], ['cCO', 'cR2', 1], ['cCO', 'oCO', 2]]
     };
-    const ketTail = sprout(product.atoms[2], -20, {id: 'cR2m', label: 'H₃C', name: 'methyl of the ethyl group', pad: 22}, 68);
+    const ketTail = sprout(product.atoms[2], 30, {id: 'cR2m', label: 'H₃C', name: 'methyl of the ethyl group', pad: 22});
     product.atoms.push(ketTail);
     product.bonds.push(['cR2', 'cR2m', 1]);
     mechanisms.push(mech(43,
