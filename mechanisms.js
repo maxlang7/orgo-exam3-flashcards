@@ -5,7 +5,8 @@ function matchesDrawing(choice, drawing) {
   if (choice.arrows.length !== drawing.length) return false;
   const remaining = [...choice.arrows];
   for (const {from, to} of drawing) {
-    const index = remaining.findIndex(arrow => arrow.to === to && arrow.sources.some(source => source.from === from));
+    const index = remaining.findIndex(arrow =>
+      (arrow.to === to || arrow.atomTarget === to) && arrow.sources.some(source => source.from === from));
     if (index < 0) return false;
     remaining.splice(index, 1);
   }

@@ -114,7 +114,8 @@ function curvedArrow(scene, from, to, previous) {
   const a=arrowAnchor(scene,from), b=arrowAnchor(scene,to);
   const length=distance(a,b) || 1;
   const nx=-(b.y-a.y)/length, ny=(b.x-a.x)/length;
-  const hook=isBondId(from) && bondAtoms(from).includes(to);
+  const hook=(isBondId(from) && bondAtoms(from).includes(to)) ||
+    (isBondId(to) && bondAtoms(to).includes(from));
   const lift=hook ? 26 : Math.min(85,Math.max(27,length*0.27));
   const bonds=scene.bonds.map(([u,v]) => [atomById(scene,u),atomById(scene,v)]);
   const [left,top,width,height]=scene.viewBox.split(' ').map(Number);

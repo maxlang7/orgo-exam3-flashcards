@@ -69,6 +69,27 @@ for (const mechanism of catalog) {
       attempt.click(arrow.to);
       assert(!attempt.view().bad, mechanism.cardId + ' ' + step.scene);
     }
+    for (const choice of step.choices) {
+      for (const arrow of choice.arrows.filter(arrow => context.isBondId(arrow.to))) {
+        const scene = mechanism.scenes[step.scene];
+        assert(context.knownTarget(scene, arrow.to));
+        const drawing = choice.arrows.map(a => ({from: a.sources[0].from, to: a.to}));
+        const drawn = drawing[choice.arrows.indexOf(arrow)];
+        for (const compact of [true, false]) {
+          const layout = context.layoutScene(scene, compact);
+          const curve = context.curvedArrow(layout, drawn.from, drawn.to, []);
+          const [a,b] = context.bondAtoms(drawn.to);
+          const [[x1,y1,x2,y2]] = context.bondSegment(layout, a, b, 1);
+          const midpoint = {x:(x1+x2)/2, y:(y1+y2)/2};
+          assert(context.distance(curve[3], midpoint) < 0.01);
+        }
+        drawn.to = arrow.atomTarget;
+        assert(context.matchesDrawing(choice, drawing), 'Existing atom endpoint must still grade correctly');
+        const otherBond = scene.bonds.map(([a,b]) => context.bondId(a,b)).find(id => id !== arrow.to);
+        drawn.to = otherBond;
+        assert(!context.matchesDrawing(choice, drawing), 'A different bond must not earn credit');
+      }
+    }
     const view = attempt.view();
     assert.equal(view.arrowCount, step.choices[0].arrows.length);
     for (const compact of [false,true]) {
@@ -100,6 +121,10 @@ for (const [cardId, intermediate] of [[32,'opened'], [33,'alkoxide'], [34,'alkox
     assert(!scene.bonds.some(([a,b,kind]) => [a,b].includes('cL') && ['dash','wedge'].includes(kind)),
       'Terminal methylene is not stereogenic');
   }
+}
+for (const [id, scene] of [[37,'tetra'], [42,'tetra'], [43,'mono']]) {
+  const step = context.mechanismFor(id).steps.find(s => s.scene === scene);
+  assert(step.choices[0].arrows.some(a => a.to === 'bond:cC|oAlk' && a.sources[0].from === 'oAlk'));
 }
 for (const bonded of ['cl1', 'cl2']) {
   for (const destination of ['cl1', 'cl2']) {

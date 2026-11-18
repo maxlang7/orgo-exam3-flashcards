@@ -55,10 +55,14 @@ function buildMechanisms() {
     return {atoms, bonds, annotations};
   }
   function leave(to, a, b) {
-    const id = `bond:${[a, b].sort().join('|')}`;
-    return {to, sources: [{from: id}]};
+    return {to, sources: [{from: bondId(a, b)}]};
   }
   function lone(to, from) { return {to, sources: [{from}]}; }
+  // The bond midpoint is the conventional arrowhead for a new π bond.
+  // Keep the previously accepted atom endpoint for the same electron movement.
+  function formPiBond(a, b, from = a) {
+    return {to: bondId(a, b), atomTarget: b, sources: [{from}]};
+  }
   function step(scene, title, choices) {
     const list = choices[0] && choices[0].arrows ? choices : [{arrows: choices}];
     return {scene, title, choices: list};
@@ -894,7 +898,7 @@ function buildMechanisms() {
         ]),
         step('protonated', 'Elimination', [
           lone('hB', 'oB'),
-          leave('c3', 'c2', 'hB'),
+          formPiBond('c2', 'c3', bondId('c2', 'hB')),
           leave('oAdd', 'c3', 'oAdd')
         ])
       ]));
@@ -1016,7 +1020,7 @@ function buildMechanisms() {
       [
         step('chromate', 'Chromate ester formation and elimination', [
           lone('hCar', 'oB'),
-          leave('oH', 'c3', 'hCar'),
+          formPiBond('c3', 'oH', bondId('c3', 'hCar')),
           leave('cr', 'oH', 'cr')
         ])
       ], {substrate: primary(0, 0, {id: 'oH', label: 'OH', element: 'O'})}));
@@ -1036,7 +1040,7 @@ function buildMechanisms() {
       [
         step('chromate', 'Chromate ester formation and elimination', [
           lone('hCar', 'oB'),
-          leave('oH', 'c2', 'hCar'),
+          formPiBond('c2', 'oH', bondId('c2', 'hCar')),
           leave('cr', 'oH', 'cr')
         ])
       ], {substrate: ipa(0, 0, {id: 'oH', label: 'OH', element: 'O'})}));
@@ -1289,7 +1293,7 @@ function buildMechanisms() {
           leave('oCO', 'cCO', 'oCO')
         ]),
         step('tetra', 'Aldehyde formation', [
-          lone('cC', 'oAlk'),
+          formPiBond('oAlk', 'cC'),
           leave('oR', 'cC', 'oR')
         ]),
         step('aldehyde', 'Second hydride addition', [
@@ -1493,7 +1497,7 @@ function buildMechanisms() {
           leave('oCO', 'cCO', 'oCO')
         ]),
         step('tetra', 'Ketone formation', [
-          lone('cC', 'oAlk'),
+          formPiBond('oAlk', 'cC'),
           leave('oR', 'cC', 'oR')
         ]),
         step('ketone', 'Second Grignard addition', [
@@ -1568,7 +1572,7 @@ function buildMechanisms() {
         ]),
         step('dianion', 'Acidic workup', protonate('o1')),
         step('mono', 'Ketone formation', [
-          lone('cC', 'oAlk'),
+          formPiBond('oAlk', 'cC'),
           leave('oH', 'cC', 'oH')
         ])
       ], {conditions: ['1. 2 equiv. EtLi', '2. H₃O⁺']}));
