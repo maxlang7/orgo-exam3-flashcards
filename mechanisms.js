@@ -1,192 +1,91 @@
 const mechanisms = buildMechanisms();
 function mechanismFor(id) { return mechanisms.find(item => item.cardId === id); }
 
-function arrowIdentity(spec) {
-  return `${spec.sources[0].from}>${spec.to}`;
-}
-
-function viableChoices(step, placed) {
-  const used = placed.map(arrow => arrow.key);
-  const alive = [];
-  step.choices.forEach((choice, index) => {
-    const pool = choice.arrows.map(arrowIdentity);
-    const fits = used.every(key => {
-      const at = pool.indexOf(key);
-      if (at < 0) return false;
-      pool.splice(at, 1);
-      return true;
-    });
-    if (fits) alive.push(index);
-  });
-  return alive;
-}
-
-function locate(step, from, to) {
-  for (const choice of step.choices) {
-    for (const spec of choice.arrows) {
-      const source = spec.sources.find(item => item.from === from);
-      if (source && spec.to === to) return {key: arrowIdentity(spec)};
-    }
+function matchesDrawing(choice, drawing) {
+  if (choice.arrows.length !== drawing.length) return false;
+  const remaining = [...choice.arrows];
+  for (const {from, to} of drawing) {
+    const index = remaining.findIndex(arrow => arrow.to === to && arrow.sources.some(source => source.from === from));
+    if (index < 0) return false;
+    remaining.splice(index, 1);
   }
-  return null;
-}
-
-function judgeArrow(step, placed, from, to) {
-  const found = locate(step, from, to);
-  if (found && placed.some(arrow => arrow.key === found.key)) return {ok: false, duplicate: true};
-  if (!found || !viableChoices(step, placed.concat([{key: found.key}])).length) {
-    const swapped = locate(step, to, from);
-    const backwards = Boolean(swapped && !placed.some(arrow => arrow.key === swapped.key));
-    return {ok: false, backwards};
-  }
-  const next = placed.concat([{key: found.key}]);
-  const done = viableChoices(step, next).every(index => step.choices[index].arrows.length === next.length);
-  return {ok: true, key: found.key, done};
+  return true;
 }
 
 function createAttempt(mech) {
   let stepIndex = 0;
-  let placed = [];
+  let drawing = [];
   let pending = null;
-  let peeked = false;
-  let anyPeek = false;
-  let finished = false;
-  let stepComplete = false;
-  let wrong = null;
-  let status = mech.steps[0].open;
-  let bad = false;
+  let phase = 'drawing';
+  let missed = false;
+  let usedAnswer = false;
 
   function step() { return mech.steps[stepIndex]; }
-  function scene() { return mech.scenes[finished ? mech.doneScene : step().scene]; }
-  function shownArrows() {
-    if (!peeked) return [];
-    const alive = viableChoices(step(), placed);
-    const spec = step().choices[alive[0] || 0].arrows;
-    return spec.filter(arrow => !placed.some(item => item.key === arrowIdentity(arrow)))
-      .map(arrow => ({from: arrow.sources[0].from, to: arrow.to, kind: 'good'}));
+  function scene() { return mech.scenes[phase === 'finished' ? mech.doneScene : step().scene]; }
+  function startStep() {
+    drawing = [];
+    pending = null;
+    missed = false;
+    phase = step().choices[0].arrows.length ? 'drawing' : 'workup';
   }
-
+  startStep();
   return {
     click(id) {
-      if (finished || peeked || stepComplete) return {ignored: true, doneStep: false};
-      if (!knownTarget(scene(), id)) return {ignored: true, doneStep: false};
-      wrong = null;
-      bad = false;
-      if (!pending) {
-        pending = id;
-        status = 'Now click the atom those electrons go to.';
-        return {ignored: false, doneStep: false};
-      }
-      if (pending === id) {
+      if (phase !== 'drawing' || !knownTarget(scene(), id)) return {ignored: true};
+      missed = false;
+      if (pending === null) pending = id;
+      else {
+        if (id !== pending) drawing.push({from: pending, to: id});
         pending = null;
-        status = placed.length ? 'Selection cleared.' : step().open;
-        return {ignored: false, doneStep: false};
       }
-      const from = pending;
-      pending = null;
-      const verdict = judgeArrow(step(), placed, from, id);
-      if (verdict.duplicate) {
-        status = 'That arrow is already drawn.';
-        return {ignored: false, doneStep: false};
-      }
-      if (!verdict.ok) {
-        wrong = {from, to: id, kind: 'bad'};
-        bad = true;
-        status = verdict.backwards
-          ? 'Those are backwards. First click the bond or atom the electrons leave.'
-          : 'That pair does not match this step.';
-        return {ignored: false, doneStep: false};
-      }
-      placed.push({from, to: id, key: verdict.key, kind: 'good'});
-      if (verdict.done) {
-        stepComplete = true;
-        status = 'Those arrows match.';
-        return {ignored: false, doneStep: true};
-      }
-      const remain = step().choices[0].arrows.length - placed.length;
-      status = `That arrow matches. ${remain} ${remain === 1 ? 'arrow' : 'arrows'} still to draw.`;
-      return {ignored: false, doneStep: false};
+      return {ignored: false};
     },
     undo() {
-      if (finished || peeked) return;
-      wrong = null;
-      bad = false;
-      stepComplete = false;
-      if (pending) {
-        pending = null;
-        status = placed.length ? 'Selection cleared.' : step().open;
-        return;
-      }
-      if (!placed.length) return;
-      placed.pop();
-      status = placed.length ? 'Last arrow removed.' : step().open;
+      if (phase !== 'drawing') return;
+      if (pending !== null) pending = null;
+      else drawing.pop();
+      missed = false;
+    },
+    check() {
+      if (phase !== 'drawing' || pending !== null || !drawing.length) return;
+      if (step().choices.some(choice => matchesDrawing(choice, drawing))) phase = 'solved';
+      else missed = true;
     },
     reveal() {
-      if (finished || peeked || stepComplete) return;
-      peeked = true;
-      anyPeek = true;
+      if (phase !== 'drawing') return;
+      drawing = step().choices[0].arrows.map(arrow => ({from: arrow.sources[0].from, to: arrow.to}));
       pending = null;
-      wrong = null;
-      bad = false;
-      status = 'Correct arrows for this step.';
+      missed = false;
+      phase = 'revealed';
+      usedAnswer = true;
     },
     advance() {
-      if (!stepComplete || peeked || finished) return;
-      stepComplete = false;
-      placed = [];
-      pending = null;
-      wrong = null;
-      bad = false;
-      if (stepIndex < mech.steps.length - 1) {
+      if (phase === 'drawing' || phase === 'finished') return;
+      if (stepIndex + 1 < mech.steps.length) {
         stepIndex++;
-        stepComplete = step().choices[0].arrows.length === 0;
-        status = step().open;
-      } else finish();
-    },
-    continueAfterPeek() {
-      if (!peeked || finished) return;
-      peeked = false;
-      placed = [];
-      pending = null;
-      wrong = null;
-      stepComplete = false;
-      bad = false;
-      if (stepIndex < mech.steps.length - 1) {
-        stepIndex++;
-        stepComplete = step().choices[0].arrows.length === 0;
-        status = step().open;
-      } else finish();
+        startStep();
+      } else {
+        phase = 'finished';
+        drawing = [];
+      }
     },
     view() {
-      const arrows = [
-        ...placed.map(arrow => ({...arrow, kind: 'good'})),
-        ...(wrong ? [wrong] : []),
-        ...shownArrows()
-      ];
+      const locked = phase !== 'drawing';
+      const finished = phase === 'finished';
+      let status = '';
+      if (missed) status = 'Try again.';
+      if (phase === 'solved') status = 'Step correct.';
+      if (phase === 'revealed' || phase === 'workup') status = step().open;
+      if (finished && !usedAnswer) status = mech.doneStatus;
       return {
-        scene: scene(),
-        arrows,
-        stepNumber: stepIndex + 1,
-        stepCount: mech.steps.length,
-        selectedId: pending,
-        locked: peeked || finished || stepComplete,
-        peeked,
-        finished,
-        stepComplete,
-        bad,
-        status,
-        canUndo: !finished && !peeked && (placed.length > 0 || pending !== null),
-        source: mech.source,
-        prompt: finished
-          ? (anyPeek ? 'Correct arrows were shown before this was finished. Rate it as it went.' : 'Every arrow matched. Rate how confident you were.')
-          : step().choices[0].arrows.length === 0 ? 'Inspect the intermediate, then continue to the product.' : stepComplete || peeked ? 'Review the arrows before continuing.' : 'Choose the atom or bond supplying the electrons, then the atom receiving them.'
+        scene: scene(), arrows: drawing, selectedId: pending, stepNumber: stepIndex + 1,
+        stepCount: mech.steps.length, locked, finished, stepComplete: locked && !finished,
+        bad: missed, status, canUndo: !locked && (pending !== null || drawing.length > 0),
+        canCheck: !locked && pending === null && drawing.length > 0,
+        source: finished ? mech.source : '',
+        prompt: finished ? (usedAnswer ? 'Rate your confidence after seeing the answer.' : 'Rate your confidence.')
+          : locked ? 'Review this step, then continue.' : 'Draw your arrows, then check the step.'
       };
     }
   };
-
-  function finish() {
-    finished = true;
-    bad = false;
-    status = anyPeek ? 'Correct arrows were shown before this was finished.' : mech.doneStatus;
-  }
 }

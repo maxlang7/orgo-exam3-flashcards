@@ -32,6 +32,7 @@ for (const mechanism of catalog) {
       attempt.click(arrow.to);
       assert(!attempt.view().bad, mechanism.cardId + ' ' + step.scene);
     }
+    attempt.check();
     assert(attempt.view().stepComplete);
     attempt.advance();
   }
@@ -45,3 +46,19 @@ for (const [key,orders] of [['reactants','2222'],['osmate','1122']]) {
   assert.equal(new Set(ligands.map(([a,b]) => a === 'os' ? b : a)).size, 4);
 }
 console.log('Validated', scenes, 'scenes and', catalog.length, 'mechanism walkthroughs.');
+
+const edit = context.createAttempt(context.mechanismFor(41));
+edit.click('bond:cAlpha|mg'); edit.click('cCO');
+edit.click('cCO'); edit.click('oCO');
+assert.equal(edit.view().status, '');
+edit.check();
+assert(edit.view().bad);
+assert.equal(edit.view().arrows.length, 2);
+edit.click('oCO'); edit.undo();
+assert.equal(edit.view().arrows.length, 2);
+edit.undo();
+assert.equal(edit.view().arrows[0].from, 'bond:cAlpha|mg');
+edit.click('bond:cCO|oCO'); edit.click('oCO');
+assert(!edit.view().locked);
+edit.check();
+assert(edit.view().stepComplete);

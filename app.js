@@ -119,8 +119,10 @@ function paintMechanism() {
   $('mech-status').textContent = view.status;
   $('mech-status').classList.toggle('is-bad', view.bad);
   $('mech-undo').disabled = !view.canUndo;
+  $('mech-reveal').hidden = view.locked;
+  $('mech-show').disabled = !view.locked && !view.canCheck;
   $('mech-show').hidden = view.finished;
-  $('mech-show').textContent = view.locked ? (view.stepNumber === view.stepCount ? 'See product' : 'Next step') : 'Show this step';
+  $('mech-show').textContent = view.locked ? (view.stepNumber === view.stepCount ? 'See product' : 'Next step') : 'Check step';
   $('solution').hidden = !view.finished;
   if (view.finished) revealed = true;
 }
@@ -231,15 +233,26 @@ $('mech-undo').onclick = () => {
   attempt.undo();
   paintMechanism();
 };
+$('mech-reveal').onclick = () => {
+  if (!attempt) return;
+  attempt.reveal();
+  paintMechanism();
+  $('mech-show').focus();
+};
 $('mech-show').onclick = () => {
   if (!attempt) return;
-  if (attempt.view().peeked) attempt.continueAfterPeek();
-  else if (attempt.view().stepComplete) attempt.advance();
-  else attempt.reveal();
+  if (attempt.view().locked) attempt.advance();
+  else attempt.check();
   paintMechanism();
 };
 document.addEventListener('keydown', event => {
   if (['SELECT', 'INPUT', 'TEXTAREA'].includes(event.target.tagName) || event.target.isContentEditable) return;
+  if (options.mode === 'mechanism' && current && attempt && (event.ctrlKey || event.metaKey)
+      && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'z') {
+    event.preventDefault();
+    if (attempt.view().canUndo) $('mech-undo').click();
+    return;
+  }
   if (event.target.closest && event.target.closest('#mech-svg')) return;
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if (options.mode === 'mechanism') {
