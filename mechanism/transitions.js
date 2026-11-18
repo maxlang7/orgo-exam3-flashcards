@@ -45,8 +45,8 @@ const mechanismAtomOverrides = {
   },
   9: {
     0: [['c1', 'me'], ['c2', 'cM'], ['c3', 'cL'], ['oEp', 'oE']],
-    1: [['me', 'c1'], ['cM', 'c2'], ['cL', 'c3'], ['oE', 'oAlk'], ['oHO', 'oNew']],
-    2: [['oAlk', 'oH'], ['oNew', 'oE2']]
+    1: [['oE', 'oAlk'], ['oHO', 'oNew']],
+    2: alcoholWorkup
   },
   10: {
     0: [['cCar', 'cN']]

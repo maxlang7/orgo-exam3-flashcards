@@ -132,13 +132,17 @@ for (const h of ['h1','h2']) {
   assert.equal(workup.absorbed.get(h),'oAlk');
   assert(!workup.absorbed.has(h === 'h1' ? 'h2' : 'h1'));
 }
-for (const [cardId, intermediate] of [[32,'opened'], [33,'alkoxide'], [34,'alkoxide']]) {
+for (const [cardId, intermediate] of [[9,'alkoxide'], [32,'opened'], [33,'alkoxide'], [34,'alkoxide']]) {
   const mechanism = context.mechanismFor(cardId);
   for (const scene of [mechanism.scenes[intermediate], mechanism.scenes.product]) {
     const [left,center,right] = ['me','cM','cL'].map(id => context.atomById(scene,id));
     const cosine = ((left.x-center.x)*(right.x-center.x) + (left.y-center.y)*(right.y-center.y)) /
       (context.distance(left,center)*context.distance(right,center));
     assert(Math.abs(cosine + 0.5) < 0.01, 'Opened epoxide needs a 120-degree backbone');
+    const terminalO = scene.atoms.find(atom => atom.element === 'O' && context.knownTarget(scene,context.bondId('cL',atom.id)));
+    const turn = ((center.x-right.x)*(terminalO.x-right.x) + (center.y-right.y)*(terminalO.y-right.y)) /
+      (context.distance(center,right)*context.distance(right,terminalO));
+    assert(Math.abs(turn + 0.5) < 0.01, 'Keep the terminal CH₂ visible at a 120-degree bend');
     assert(!scene.bonds.some(([a,b,kind]) => [a,b].includes('cL') && ['dash','wedge'].includes(kind)),
       'Terminal methylene is not stereogenic');
   }

@@ -205,8 +205,8 @@ function buildMechanisms() {
     const br = A('brX', P(x, y, 0, 70), {label: 'Br', element: 'Br', name: 'bromine of HBr', pad: 16});
     return {atoms: [h, br], bonds: [['hX', 'brX', 1]]};
   }
-  function openedEpoxide(middleOxygen, terminalOxygen, stereo) {
-    const side = stereo === 'wedge' ? 1 : -1;
+  function openedEpoxide(middleOxygen, terminalOxygen, stereo, orientation = stereo === 'wedge' ? 'up' : 'down') {
+    const side = orientation === 'up' ? 1 : -1;
     const middle = A('cM', [200, 240], {name:'the more substituted carbon'});
     const methyl = sprout(middle, 180 + side*30, {id:'me', name:'methyl carbon'});
     const end = sprout(middle, -side*30, {id:'cL', name:'the less substituted carbon'});
@@ -568,20 +568,15 @@ function buildMechanisms() {
     const ep = epoxide(200, 200);
     const ho = A('oHO', [560, 240], {label: 'OH⁻', element: 'O', name: 'hydroxide', pad: 18});
     const epScene = join(ep, {atoms: [ho], bonds: []});
-    const opened = chain3(160, 250);
-    const oAlk = sprout(opened[1], 110, {id: 'oAlk', label: 'O⁻', element: 'O', name: 'alkoxide oxygen', pad: 18}, 66);
-    const ohNew = sprout(opened[2], -20, {id: 'oNew', label: 'OH', element: 'O', name: 'the new hydroxyl', pad: 18}, 66);
-    const alkoxide = join(
-      {atoms: [...opened, oAlk, ohNew], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c2', 'oAlk', 1], ['c3', 'oNew', 1]]},
-      water(630, 250)
-    );
-    const chain = chain3(180, 250);
-    const ohM = sprout(chain[1], 110, {id: 'oH', label: 'OH', element: 'O', name: 'hydroxyl on the middle carbon', pad: 18}, 66);
-    const ohE = sprout(chain[2], -20, {id: 'oE2', label: 'OH', element: 'O', name: 'hydroxyl on the end carbon', pad: 18}, 66);
-    const product = {atoms: [...chain, ohM, ohE], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c2', 'oH', 'dash'], ['c3', 'oE2', 1]]};
+    const terminalOH = {id: 'oNew', label: 'OH', element: 'O', name: 'hydroxyl on the terminal methylene'};
+    const alkoxide = join(openedEpoxide(
+      {id: 'oAlk', label: 'O⁻', element: 'O', name: 'epoxide-derived alkoxide'}, terminalOH, 'dash', 'up'),
+      water(630, 250));
+    const product = openedEpoxide(
+      {id: 'oH', label: 'OH', element: 'O', name: 'hydroxyl on the middle carbon'}, terminalOH, 'dash', 'up');
     mechanisms.push(mech(9,
-      'mCPBA makes the epoxide, then hydroxide opens it at the less substituted carbon. The diol is anti.',
-      'The product is the trans diol.',
+      'mCPBA makes the epoxide, then hydroxide opens it at the less substituted carbon. Ring opening proceeds by backside attack.',
+      'The product is propane-1,2-diol.',
       {reactants, epScene, alkoxide, product},
       [
         step('reactants', 'Epoxidation', [
