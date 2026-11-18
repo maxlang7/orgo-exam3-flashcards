@@ -86,6 +86,12 @@ progress::-moz-progress-bar { background:var(--green); }
 #practice-content .diagram-scroll { margin:18px 0; padding:12px 0; }
 #reaction, #mech-svg { display:block; width:100%; height:auto; }
 #mask-label { font-family:"DM Sans",system-ui,sans-serif; fill:var(--green); }
+.route-label { font:18px "DM Sans",system-ui,sans-serif; fill:#18241e; }
+.route-arrow { fill:none; stroke:#18241e; stroke-width:1.4; }
+.route-arrowhead { fill:#18241e; }
+.route-or { font:italic 17px var(--serif); fill:var(--muted); }
+.route-mask { fill:#f6f9f4; stroke:#a9bfae; stroke-dasharray:5 5; }
+.route-placeholder { font:18px "DM Sans",system-ui,sans-serif; fill:var(--green); }
 .action-area { display:flex; justify-content:center; }
 .primary, #mech-show { background:var(--green); color:white; border-color:var(--green); }
 .primary:hover, #mech-show:hover:enabled { background:#11483c; }
