@@ -72,131 +72,72 @@ function wedgePoints(scene, fromId, toId) {
     .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
 }
 
-function pointOf(scene, id) {
+// Measure electron flow from the visible bond stroke or the edge of an atom label.
+function arrowAnchor(scene, id, toward) {
   if (isBondId(id)) {
     const [a, b] = bondAtoms(id);
-    const A = atomById(scene, a);
-    const B = atomById(scene, b);
-    if (!A || !B) return null;
-    return {x: (A.x + B.x) / 2, y: (A.y + B.y) / 2, gap: 2};
+    const bond = scene.bonds.find(([u,v]) => bondId(u,v) === id);
+    const midpoints = bondSegment(scene, bond[0], bond[1], bond[2]).map(([x,y,u,v]) =>
+      ({x:(x+u)/2, y:(y+v)/2}));
+    if (!toward) return centerBetween(atomById(scene,a), atomById(scene,b));
+    return midpoints.reduce((best, p) => distance(p,toward) < distance(best,toward) ? p : best);
   }
-  const atom = atomById(scene, id);
-  if (!atom) return null;
-  return {x: atom.x, y: atom.y, gap: labelGap(atom)};
+  const atom = atomById(scene,id);
+  if (!toward) return atom;
+  const len = distance(atom,toward) || 1;
+  const ux = (toward.x-atom.x)/len, uy = (toward.y-atom.y)/len;
+  const gap = bondGap(atom,ux,uy) + 3;
+  return {x:atom.x+gap*ux, y:atom.y+gap*uy};
 }
 
-function labelGap(atom) {
-  if (!atom.label) return 14;
-  const n = [...atom.label].length;
-  if (n >= 3) return 30;
-  if (n === 2) return 26;
-  return 16;
+function centerBetween(a,b) { return {x:(a.x+b.x)/2, y:(a.y+b.y)/2}; }
+function distance(a,b) { return Math.hypot(a.x-b.x,a.y-b.y); }
+
+function segmentDistance(p,a,b) {
+  const dx=b.x-a.x, dy=b.y-a.y;
+  const t=Math.max(0, Math.min(1, ((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy || 1)));
+  return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
 }
 
-function collapseArrow(scene, fromId, toId, bend) {
-  const [left, right] = bondAtoms(fromId);
-  if (toId !== left && toId !== right) return null;
-  const far = atomById(scene, toId === left ? right : left);
-  const near = atomById(scene, toId);
-  const lx = near.x - far.x;
-  const ly = near.y - far.y;
-  const llen = Math.hypot(lx, ly) || 1;
-  const ux = lx / llen;
-  const uy = ly / llen;
-  const px = -uy;
-  const py = ux;
-  const side = Math.sign(bend || 1);
-  const x1 = (far.x + near.x) / 2;
-  const y1 = (far.y + near.y) / 2;
-  const endGap = Math.min(llen / 4, labelGap(near));
-  const x2 = near.x - ux * endGap * 0.3 + px * endGap * side;
-  const y2 = near.y - uy * endGap * 0.3 + py * endGap * side;
-  const cx = x1 + px * 34 * side;
-  const cy = y1 + py * 34 * side;
-  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
-}
-
-function arrowPath(scene, fromId, toId, bend) {
-  const alongBond = isBondId(fromId) && collapseArrow(scene, fromId, toId, bend);
-  if (alongBond) return alongBond;
-  const a = pointOf(scene, fromId);
-  const b = pointOf(scene, toId);
-  if (!a || !b) return '';
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const room = Math.max(16, len - 18);
-  const want = a.gap + b.gap + 2;
-  const scale = want > room ? room / want : 1;
-  const mx = (a.x + b.x) / 2;
-  const my = (a.y + b.y) / 2;
-  const cx = mx + -dy / len * bend;
-  const cy = my + dx / len * bend;
-  const end = (point, gap) => {
-    const vx = cx - point.x;
-    const vy = cy - point.y;
-    const vlen = Math.hypot(vx, vy) || 1;
-    return [point.x + vx / vlen * gap, point.y + vy / vlen * gap];
-  };
-  const [x1, y1] = end(a, a.gap * scale);
-  const [x2, y2] = end(b, (b.gap + 2) * scale);
-  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
-}
-
-function centerOf(scene, id) {
-  if (isBondId(id)) {
-    const [a, b] = bondAtoms(id);
-    const A = atomById(scene, a);
-    const B = atomById(scene, b);
-    if (!A || !B) return null;
-    return {x: (A.x + B.x) / 2, y: (A.y + B.y) / 2};
+function curvedArrow(scene, from, to, previous) {
+  const a=arrowAnchor(scene,from), b=arrowAnchor(scene,to);
+  const length=distance(a,b) || 1;
+  const nx=-(b.y-a.y)/length, ny=(b.x-a.x)/length;
+  const hook=isBondId(from) && bondAtoms(from).includes(to);
+  const lift=hook ? 26 : Math.min(85,Math.max(27,length*0.27));
+  const bonds=scene.bonds.map(([u,v]) => [atomById(scene,u),atomById(scene,v)]);
+  const [left,top,width,height]=scene.viewBox.split(' ').map(Number);
+  let best;
+  // An asymmetric arc can clear a ligand near one end without taking a wide
+  // detour at the other. Prefer a regular arc when both have room.
+  const profiles = [[1,1], [1.65,1.65], [0.65,0.65], [0.35,1.5], [1.5,0.35]];
+  for (const [tailLift, headLift] of profiles) for (const side of [1,-1]) {
+    const control=(fraction, amplitude) => ({
+      x:a.x+(b.x-a.x)*fraction+nx*lift*side*amplitude,
+      y:a.y+(b.y-a.y)*fraction+ny*lift*side*amplitude
+    });
+    const c=control(hook ? -0.05 : 0.2, tailLift), d=control(hook ? 1.1 : 0.8, headLift);
+    const start=arrowAnchor(scene,from,c), end=arrowAnchor(scene,to,d);
+    const samples=[];
+    let score=8*(Math.abs(tailLift-1)+Math.abs(headLift-1));
+    for (let i=1; i<24; i++) {
+      const t=i/24, u=1-t;
+      const at=axis => u**3*start[axis]+3*u*u*t*c[axis]+3*u*t*t*d[axis]+t**3*end[axis];
+      const p={x:at('x'),y:at('y')};
+      samples.push(p);
+      if (p.x<left+4 || p.x>left+width-4 || p.y<top+4 || p.y>top+height-4) score+=2000;
+      for (const atom of scene.atoms) {
+        const dx=Math.max(0,Math.abs(p.x-atom.x)-labelWidth(atom)/2);
+        const dy=Math.max(0,Math.abs(p.y-atom.y)-(atom.label ? 10 : 0));
+        score+=5*Math.max(0,9-Math.hypot(dx,dy))**2;
+      }
+      for (const [u,v] of bonds) score+=Math.max(0,6-segmentDistance(p,u,v))**2;
+      for (const mark of scene.texts) score+=Math.max(0,16-distance(p,{x:mark.x,y:mark.y-6}))**2;
+      for (const other of previous) score+=2*Math.max(0,10-distance(p,other));
+    }
+    if (!best || score<best.score) best={start,c,d,end,samples,score};
   }
-  const atom = atomById(scene, id);
-  return atom ? {x: atom.x, y: atom.y} : null;
-}
-
-function crowdAt(scene, x, y, ignore) {
-  let score = 0;
-  for (const atom of scene.atoms) {
-    if (ignore.has(atom.id)) continue;
-    const d = Math.hypot(atom.x - x, atom.y - y);
-    score += 1 / (d * d + 40);
-  }
-  return score;
-}
-
-function autoBend(scene, fromId, toId) {
-  const a = centerOf(scene, fromId);
-  const b = centerOf(scene, toId);
-  if (!a || !b) return 42;
-  const ignore = new Set(isBondId(fromId) ? bondAtoms(fromId) : [fromId]);
-  ignore.add(toId);
-  if (isBondId(fromId) && collapseArrow(scene, fromId, toId, 1)) {
-    const [left, right] = bondAtoms(fromId);
-    const farId = toId === left ? right : left;
-    const far = atomById(scene, farId);
-    const near = atomById(scene, toId);
-    const lx = near.x - far.x;
-    const ly = near.y - far.y;
-    const llen = Math.hypot(lx, ly) || 1;
-    const px = -ly / llen;
-    const py = lx / llen;
-    const mx = (far.x + near.x) / 2;
-    const my = (far.y + near.y) / 2;
-    const plus = crowdAt(scene, mx + px * 24, my + py * 24, ignore);
-    const minus = crowdAt(scene, mx - px * 24, my - py * 24, ignore);
-    return plus <= minus ? 34 : -34;
-  }
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const amount = Math.max(34, Math.min(78, len * 0.16));
-  const mx = (a.x + b.x) / 2;
-  const my = (a.y + b.y) / 2;
-  const px = -dy / len;
-  const py = dx / len;
-  const plus = crowdAt(scene, mx + px * amount, my + py * amount, ignore);
-  const minus = crowdAt(scene, mx - px * amount, my - py * amount, ignore);
-  const bend = plus <= minus ? amount : -amount;
-  return Math.round(bend);
+  previous.push(...best.samples);
+  const xy=p => p.x.toFixed(1)+' '+p.y.toFixed(1);
+  return 'M '+xy(best.start)+' C '+xy(best.c)+' '+xy(best.d)+' '+xy(best.end);
 }

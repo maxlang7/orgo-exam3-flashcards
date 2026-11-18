@@ -32,6 +32,13 @@ for (const mechanism of catalog) {
       attempt.click(arrow.to);
       assert(!attempt.view().bad, mechanism.cardId + ' ' + step.scene);
     }
+    const view = attempt.view();
+    assert.equal(view.arrowCount, step.choices[0].arrows.length);
+    for (const compact of [false,true]) {
+      const svg = context.mechanismInner(context.layoutScene(view.scene,compact),view);
+      assert(!/NaN|Infinity/.test(svg));
+      assert.equal((svg.match(/class="mech-arrow /g) || []).length, view.arrowCount);
+    }
     attempt.check();
     assert(attempt.view().stepComplete);
     attempt.advance();

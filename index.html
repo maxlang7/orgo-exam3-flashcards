@@ -27,14 +27,12 @@
 </svg></div><p class="scroll-hint">Swipe across to see the full reaction.</p>
 <div class="action-area"><button class="primary" id="reveal">Reveal answer <kbd>Space</kbd></button></div></div>
 <div id="mechanism" hidden>
-<div class="mech-guide"><strong id="mech-step"></strong><button class="quiet" type="button" id="mech-zoom" aria-pressed="false">Enlarge drawing</button><div id="mech-flow"><span id="mech-from">Electron source</span><span aria-hidden="true">→</span><span id="mech-to">Destination atom</span></div></div>
+<p id="mech-companions" hidden></p><p id="mech-status" role="status"></p>
+<div class="mech-guide"><div class="step-heading"><span id="mech-step"></span><strong id="arrow-count"></strong></div><button class="quiet" type="button" id="mech-zoom" aria-pressed="false">Enlarge drawing</button><div id="mech-flow"><span id="mech-from">Electron source</span><span aria-hidden="true">→</span><span id="mech-to">Destination atom</span></div></div>
 <div class="diagram-scroll" tabindex="0" aria-label="Mechanism drawing. Scroll horizontally on small screens.">
 <svg id="mech-svg" viewBox="0 0 760 440" role="group" aria-label="Mechanism. Click the bond or atom the electrons leave, then the atom they go to."></svg>
 </div>
-<p id="mech-companions" hidden></p><p class="scroll-hint mech-scroll-hint">Swipe across the drawing to see both ends of the reaction.</p>
-<p id="mech-status" role="status"></p>
 <div class="mech-actions"><button type="button" class="quiet" id="mech-undo">Undo</button><button type="button" class="quiet" id="mech-reveal">Reveal step</button><button type="button" class="quiet" id="mech-show">Check step</button></div>
-<p id="mech-source" class="mech-source"></p>
 </div>
 <div id="solution" hidden><div class="rating-heading"><h3>How confident were you?</h3><span>Rate to continue</span></div><div class="ratings">
 <button data-rating="1"><kbd>1</kbd><strong>25%</strong><span>Needs work</span></button><button data-rating="2"><kbd>2</kbd><strong>50%</strong><span>Getting there</span></button><button data-rating="3"><kbd>3</kbd><strong>75%</strong><span>Almost solid</span></button><button data-rating="4"><kbd>4</kbd><strong>100%</strong><span>Solid</span></button>

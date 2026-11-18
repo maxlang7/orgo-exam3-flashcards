@@ -75,14 +75,12 @@ function createAttempt(mech) {
       let status = '';
       if (missed) status = 'Try again.';
       if (phase === 'solved') status = 'Step correct.';
-      if (phase === 'revealed' || phase === 'workup') status = step().open;
-      if (finished && !usedAnswer) status = mech.doneStatus;
       return {
         scene: scene(), arrows: drawing, selectedId: pending, stepNumber: stepIndex + 1,
         stepCount: mech.steps.length, locked, finished, stepComplete: locked && !finished,
         bad: missed, status, canUndo: !locked && (pending !== null || drawing.length > 0),
         canCheck: !locked && pending === null && drawing.length > 0,
-        source: finished ? mech.source : '',
+        arrowCount: step().choices[0].arrows.length,
         prompt: finished ? (usedAnswer ? 'Rate your confidence after seeing the answer.' : 'Rate your confidence.')
           : locked ? 'Review this step, then continue.' : 'Draw your arrows, then check the step.'
       };

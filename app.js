@@ -63,6 +63,7 @@ function drawReaction() {
   updateVisibility();
 }
 function next(requestedId) {
+  $('feedback').hidden = options.mode === 'mechanism';
   revealed = false;
   updateProgress();
   const pool = practiceDeck();
@@ -115,7 +116,8 @@ function paintMechanism() {
   const companions = (view.scene.annotations || []).filter(item => item.formula).map(item => item.formula);
   $('mech-companions').hidden = !companions.length;
   $('mech-companions').textContent = companions.join(' · ');
-  $('mech-source').textContent = view.source;
+  $('arrow-count').hidden = view.finished;
+  $('arrow-count').textContent = view.arrowCount === 0 ? '0 arrows · Workup' : `${view.arrowCount} ${view.arrowCount === 1 ? 'arrow' : 'arrows'}`;
   $('mech-status').textContent = view.status;
   $('mech-status').classList.toggle('is-bad', view.bad);
   $('mech-undo').disabled = !view.canUndo;

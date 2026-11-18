@@ -30,7 +30,7 @@
 .atom-ring{fill:none;stroke:transparent;stroke-width:2}
 .atom:hover .atom-ring,.atom:focus-visible .atom-ring{stroke:#8eaf96}
 .atom.is-selected .atom-ring{stroke:#285b40}
-.mech-arrow{fill:none;stroke-width:2.4;stroke-linecap:round;pointer-events:none}
+.mech-arrow{fill:none;stroke-width:1.9;stroke-linecap:round;pointer-events:none}
 .mech-arrow.is-good{stroke:#285b40}
 .mech-arrow.is-draft{stroke:#475569}
 .mech-plus{font-family:system-ui,sans-serif;font-size:26px;fill:#65776c;pointer-events:none}

@@ -25,9 +25,10 @@ function mechanismInner(scene, state) {
   }).join('');
   const notes = (scene.texts || []).map(item =>
     `<text class="${item.className}" x="${item.x}" y="${item.y}" text-anchor="middle">${escapeXml(item.text)}</text>`).join('');
+  const routedPoints = [];
   const paths = arrows.map(arrow => {
     const kind = state.locked ? 'good' : 'draft';
-    return `<path class="mech-arrow is-${kind}" d="${arrowPath(scene, arrow.from, arrow.to, autoBend(scene, arrow.from, arrow.to))}" marker-end="url(#arrow-${kind})"/>`;
+    return `<path class="mech-arrow is-${kind}" d="${curvedArrow(scene, arrow.from, arrow.to, routedPoints)}" marker-end="url(#arrow-${kind})"/>`;
   }).join('');
   const atoms = scene.atoms.map(atom => {
     const selected = state.selectedId === atom.id ? ' is-selected' : '';
@@ -40,8 +41,8 @@ function mechanismInner(scene, state) {
   }).join('');
   return `<defs>
 
-<marker id="arrow-good" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="13" markerHeight="13" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L11 6 L1 10.8 Z" fill="#285b40"/></marker>
-<marker id="arrow-draft" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="13" markerHeight="13" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L11 6 L1 10.8 Z" fill="#475569"/></marker>
+<marker id="arrow-good" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" fill="#285b40"/></marker>
+<marker id="arrow-draft" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" fill="#475569"/></marker>
 </defs><g class="${state.locked ? 'is-locked' : ''}">${hits}${bonds}${notes}${paths}${atoms}</g>`;
 }
 
