@@ -58,3 +58,16 @@
 #mech-status.is-bad{color:#8a3030}
 .mech-actions{display:flex;justify-content:center;gap:8px;margin-top:8px}
 .mech-actions button:disabled{opacity:.4;cursor:default}
+.mech-guide{margin-top:18px;background:#f1f6ef;border:1px solid #d9e3d7;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;font-size:13px;color:#344f40}
+#mech-flow{display:flex;align-items:center;gap:7px}
+#mech-flow[hidden]{display:none}
+#mech-flow span{padding:3px}
+#mech-flow .active{background:#285b40;border-radius:5px;color:white;padding:5px 9px}
+#mechanism .diagram-scroll{margin:0 0 10px;border:1px solid #d9e3d7;border-top:0;border-radius:0 0 10px 10px}
+#mechanism .mech-actions{justify-content:flex-end}
+#mech-show{border:1px solid #adbeaf;border-radius:6px;color:#285b40}
+#mech-status{font-weight:550}
+@media(max-width:520px){.mech-guide{align-items:flex-start;flex-direction:column}#mech-svg{min-width:520px}}
+
+#mechanism .mech-scroll-hint{margin:2px 0 10px}
+@media(min-width:640px){#mechanism .mech-scroll-hint{display:none}}

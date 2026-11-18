@@ -4,7 +4,7 @@
 <body><main>
 <header><div class="eyebrow">09-219 · EXAM III</div><h1>Reaction practice<span>.</span></h1><p>Build confidence, one reaction at a time.</p></header>
 <section class="practice-options" aria-label="Practice options">
-<label for="practice-mode">Practice<select id="practice-mode"><option value="mixed">Conditions & products</option><option value="reagents">Conditions only</option><option value="product">Products only</option><option value="mechanism">Mechanisms</option></select></label>
+<label for="practice-mode">Practice<select id="practice-mode"><option value="mixed">Conditions & products</option><option value="reagents">Conditions only</option><option value="product">Products only</option><option value="mechanism">Mechanisms (in development)</option></select></label>
 
 <label for="practice-order">Card selection<select id="practice-order"><option value="adaptive">Prioritize low confidence</option><option value="random">Equal chance for every card</option></select></label>
 </section>
@@ -25,12 +25,14 @@
 </svg></div><p class="scroll-hint">Swipe across to see the full reaction.</p>
 <div class="action-area"><button class="primary" id="reveal">Reveal answer <kbd>Space</kbd></button></div></div>
 <div id="mechanism" hidden>
-<p id="mech-source" class="mech-source"></p>
+<div class="mech-guide"><strong id="mech-step"></strong><div id="mech-flow"><span id="mech-from">Electron source</span><span aria-hidden="true">→</span><span id="mech-to">Destination atom</span></div></div>
 <div class="diagram-scroll" tabindex="0" aria-label="Mechanism drawing. Scroll horizontally on small screens.">
 <svg id="mech-svg" viewBox="0 0 760 440" role="group" aria-label="Mechanism. Click the bond or atom the electrons leave, then the atom they go to."></svg>
 </div>
+<p class="scroll-hint mech-scroll-hint">Swipe across the drawing to see both ends of the reaction.</p>
 <p id="mech-status" role="status"></p>
 <div class="mech-actions"><button type="button" class="quiet" id="mech-undo">Undo</button><button type="button" class="quiet" id="mech-show">Show this step</button></div>
+<p id="mech-source" class="mech-source"></p>
 </div>
 <div id="solution" hidden><div class="rating-heading"><h3>How confident were you?</h3><span>Rate to continue</span></div><div class="ratings">
 <button data-rating="1"><kbd>1</kbd><strong>25%</strong><span>Needs work</span></button><button data-rating="2"><kbd>2</kbd><strong>50%</strong><span>Getting there</span></button><button data-rating="3"><kbd>3</kbd><strong>75%</strong><span>Almost solid</span></button><button data-rating="4"><kbd>4</kbd><strong>100%</strong><span>Solid</span></button>

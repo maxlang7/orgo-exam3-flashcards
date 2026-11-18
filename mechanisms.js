@@ -1,6 +1,5 @@
 // First click is where the electrons leave: a bond or an atom. Second click is the
-// atom they go to. A bond click and the atom that loses that bond count as the
-// same arrow. Every reaction on the exam sheet has a mechanism below.
+// atom they go to. Bond-electron arrows must start on the bond itself.
 //
 // Angles use standard position, 0° east and 90° north, with y growing downward.
 // Carbon chains are ordinary zigzags, 120° at each carbon. A carbonyl carbon
@@ -94,7 +93,15 @@ function pointOf(scene, id) {
   }
   const atom = atomById(scene, id);
   if (!atom) return null;
-  return {x: atom.x, y: atom.y, gap: atom.label ? 18 : 14};
+  return {x: atom.x, y: atom.y, gap: labelGap(atom)};
+}
+
+function labelGap(atom) {
+  if (!atom.label) return 14;
+  const n = [...atom.label].length;
+  if (n >= 3) return 30;
+  if (n === 2) return 26;
+  return 16;
 }
 
 function collapseArrow(scene, fromId, toId, bend) {
@@ -109,15 +116,24 @@ function collapseArrow(scene, fromId, toId, bend) {
   const uy = ly / llen;
   const px = -uy;
   const py = ux;
-  const off = 16 * Math.sign(bend || 1);
-  const start = (far.pad || 8) + 16;
-  const end = llen - (near.pad || 16);
+  const off = 22 * Math.sign(bend || 1);
+  const farClear = far.label ? labelGap(far) : (far.pad || 8);
+  const nearClear = near.label ? labelGap(near) + 2 : (near.pad || 12);
+  let start = farClear + 8;
+  let end = llen - nearClear;
+  if (end - start < 32) {
+    end = llen - Math.min(nearClear, llen * 0.28);
+    start = end - 34;
+    if (start < llen * 0.12) start = llen * 0.12;
+    if (end > llen - 8) end = llen - 8;
+    if (end < start + 18) end = Math.min(llen - 6, start + 18);
+  }
   const x1 = far.x + ux * start + px * off;
   const y1 = far.y + uy * start + py * off;
-  const x2 = far.x + ux * end + px * off * 0.8;
-  const y2 = far.y + uy * end + py * off * 0.8;
-  const cx = (x1 + x2) / 2 + px * off * 0.25;
-  const cy = (y1 + y2) / 2 + py * off * 0.25;
+  const x2 = far.x + ux * end + px * off * 0.4;
+  const y2 = far.y + uy * end + py * off * 0.4;
+  const cx = (x1 + x2) / 2 + px * off * 0.4;
+  const cy = (y1 + y2) / 2 + py * off * 0.4;
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
@@ -130,6 +146,9 @@ function arrowPath(scene, fromId, toId, bend) {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len = Math.hypot(dx, dy) || 1;
+  const room = Math.max(16, len - 18);
+  const want = a.gap + b.gap + 2;
+  const scale = want > room ? room / want : 1;
   const mx = (a.x + b.x) / 2;
   const my = (a.y + b.y) / 2;
   const cx = mx + -dy / len * bend;
@@ -140,8 +159,8 @@ function arrowPath(scene, fromId, toId, bend) {
     const vlen = Math.hypot(vx, vy) || 1;
     return [point.x + vx / vlen * gap, point.y + vy / vlen * gap];
   };
-  const [x1, y1] = end(a, a.gap);
-  const [x2, y2] = end(b, b.gap + 2);
+  const [x1, y1] = end(a, a.gap * scale);
+  const [x2, y2] = end(b, (b.gap + 2) * scale);
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
@@ -158,13 +177,13 @@ function mechanismInner(scene, state) {
     const {a, b, len, ux, uy} = bondEnds(scene, from, to);
     const insetA = hitRadius(a) + 2;
     const insetB = hitRadius(b) + 2;
-    if (len <= insetA + insetB + 8) return '';
+    const scale = Math.min(1, (len - 8) / (insetA + insetB));
     const id = bondId(from, to);
     const selected = state.selectedId === id ? ' is-selected' : '';
-    const x1 = a.x + ux * insetA;
-    const y1 = a.y + uy * insetA;
-    const x2 = b.x - ux * insetB;
-    const y2 = b.y - uy * insetB;
+    const x1 = a.x + ux * insetA * scale;
+    const y1 = a.y + uy * insetA * scale;
+    const x2 = b.x - ux * insetB * scale;
+    const y2 = b.y - uy * insetB * scale;
     const label = `bond between ${atomById(scene, from).name} and ${atomById(scene, to).name}`;
     return `<g class="bond-hit${selected}" data-id="${id}" tabindex="${state.locked ? -1 : 0}" role="button" aria-label="${escapeXml(label)}"><line class="bond-hit-line" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/><line class="bond-select" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/></g>`;
   }).join('');
@@ -223,8 +242,8 @@ function mechanismInner(scene, state) {
 .mech-plus{font-family:system-ui,sans-serif;font-size:26px;fill:#65776c;pointer-events:none}
 .mech-salt{font-family:system-ui,sans-serif;font-size:16px;font-weight:600;fill:#65776c;pointer-events:none}
 </style>
-<marker id="arrow-good" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#285b40"/></marker>
-<marker id="arrow-bad" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#9c3b3b"/></marker>
+<marker id="arrow-good" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="13" markerHeight="13" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L11 6 L1 10.8 Z" fill="#285b40"/></marker>
+<marker id="arrow-bad" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="13" markerHeight="13" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L11 6 L1 10.8 Z" fill="#9c3b3b"/></marker>
 </defs><g class="${state.locked ? 'is-locked' : ''}">${hits}${bonds}${notes}${paths}${atoms}</g>`;
 }
 
@@ -304,26 +323,6 @@ function createAttempt(mech) {
       if (!knownTarget(scene(), id)) return {ignored: true, doneStep: false};
       wrong = null;
       bad = false;
-      if (isBondId(id)) {
-        if (pending === id) {
-          pending = null;
-          status = placed.length ? 'Selection cleared.' : step().open;
-          return {ignored: false, doneStep: false};
-        }
-        if (pending && !isBondId(pending)) {
-          const swapped = locate(step(), id, pending);
-          if (swapped && !placed.some(arrow => arrow.key === swapped.key)) {
-            wrong = {from: pending, to: id, bend: 36, kind: 'bad'};
-            pending = null;
-            bad = true;
-            status = 'Those are backwards. First click the bond or atom the electrons leave.';
-            return {ignored: false, doneStep: false};
-          }
-        }
-        pending = id;
-        status = 'Now click the atom those electrons go to.';
-        return {ignored: false, doneStep: false};
-      }
       if (!pending) {
         pending = id;
         status = 'Now click the atom those electrons go to.';
@@ -416,6 +415,8 @@ function createAttempt(mech) {
       return {
         scene: scene(),
         arrows,
+        stepNumber: stepIndex + 1,
+        stepCount: mech.steps.length,
         selectedId: pending,
         locked: peeked || finished || stepComplete,
         peeked,
@@ -427,7 +428,7 @@ function createAttempt(mech) {
         source: mech.source,
         prompt: finished
           ? (anyPeek ? 'Correct arrows were shown before this was finished. Rate it as it went.' : 'Every arrow matched. Rate how confident you were.')
-          : `Step ${stepIndex + 1} of ${mech.steps.length}. Click the bond or atom the electrons leave, then the atom they go to.`
+          : stepComplete || peeked ? 'Review the arrows before continuing.' : 'Choose the atom or bond supplying the electrons, then the atom receiving them.'
       };
     }
   };
@@ -566,9 +567,9 @@ function buildMechanisms() {
     }
     return {atoms, bonds, texts};
   }
-  function leave(to, a, b, ...aliases) {
+  function leave(to, a, b) {
     const id = `bond:${[a, b].sort().join('|')}`;
-    return {to, sources: [{from: id}, ...aliases.map(from => ({from}))]};
+    return {to, sources: [{from: id}]};
   }
   function lone(to, from) { return {to, sources: [{from}]}; }
   function step(scene, open, choices) {
@@ -577,8 +578,8 @@ function buildMechanisms() {
   }
   function protonate(oId) {
     return [
-      {arrows: [lone('h1', oId), leave('oW', 'h1', 'oW', 'h1')]},
-      {arrows: [lone('h2', oId), leave('oW', 'h2', 'oW', 'h2')]}
+      {arrows: [lone('h1', oId), leave('oW', 'h1', 'oW')]},
+      {arrows: [lone('h2', oId), leave('oW', 'h2', 'oW')]}
     ];
   }
   function mech(cardId, source, doneStatus, scenes, steps, doneScene = 'product') {
@@ -739,13 +740,13 @@ function buildMechanisms() {
       {reactants, cation, oxonium, product},
       [
         step('reactants', 'The pi bond takes the proton. This step takes 2 arrows.', [
-          leave('hA', 'c2', 'c3', 'c2', 'c3'),
-          leave('oA', 'hA', 'oA', 'hA')
+          leave('hA', 'c2', 'c3'),
+          leave('oA', 'hA', 'oA')
         ]),
         step('cation', 'Water attacks the carbocation. This step takes 1 arrow.', [lone('c2', 'oW')]),
         step('oxonium', 'Another water takes a proton from the oxonium. This step takes 2 arrows.', [
-          {arrows: [lone('hP', 'oW'), leave('oAdd', 'hP', 'oAdd', 'hP')]},
-          {arrows: [lone('hQ', 'oW'), leave('oAdd', 'hQ', 'oAdd', 'hQ')]}
+          {arrows: [lone('hP', 'oW'), leave('oAdd', 'hP', 'oAdd')]},
+          {arrows: [lone('hQ', 'oW'), leave('oAdd', 'hQ', 'oAdd')]}
         ])
       ]));
   }
@@ -784,21 +785,21 @@ function buildMechanisms() {
       {reactants, cation, opened, replace, product},
       [
         step('reactants', 'The pi bond bonds to mercury, mercury bonds to the other carbon, and acetate leaves. This step takes 3 arrows.', [
-          leave('hg', 'c2', 'c3', 'c2', 'c3'),
+          leave('hg', 'c2', 'c3'),
           lone('c3', 'hg'),
-          leave('oAc', 'hg', 'oAc', 'hg')
+          leave('oAc', 'hg', 'oAc')
         ]),
         step('cation', 'Water attacks the more substituted carbon and that carbon lets go of mercury. This step takes 2 arrows.', [
           lone('c2', 'oW'),
-          leave('hg', 'c2', 'hg', 'c2')
+          leave('hg', 'c2', 'hg')
         ]),
         step('opened', 'Water takes a proton from the oxonium. This step takes 2 arrows.', [
-          {arrows: [lone('hP', 'oW'), leave('oAdd', 'hP', 'oAdd', 'hP')]},
-          {arrows: [lone('hQ', 'oW'), leave('oAdd', 'hQ', 'oAdd', 'hQ')]}
+          {arrows: [lone('hP', 'oW'), leave('oAdd', 'hP', 'oAdd')]},
+          {arrows: [lone('hQ', 'oW'), leave('oAdd', 'hQ', 'oAdd')]}
         ]),
         step('replace', 'The hydride replaces mercury. This step takes 2 arrows.', [
-          leave('c3', 'hN', 'bN', 'hN'),
-          leave('hg', 'c3', 'hg', 'c3')
+          leave('c3', 'hN', 'bN'),
+          leave('hg', 'c3', 'hg')
         ])
       ]));
   }
@@ -834,17 +835,17 @@ function buildMechanisms() {
       {reactants, boraneScene, migrate, cleavage, product},
       [
         step('reactants', 'The addition is concerted. Boron bonds to the end carbon and hydrogen bonds to the middle carbon. This step takes 2 arrows.', [
-          leave('bN', 'c2', 'c3', 'c3'),
-          leave('c2', 'hB', 'bN', 'hB')
+          leave('bN', 'c2', 'c3'),
+          leave('c2', 'hB', 'bN')
         ]),
         step('boraneScene', 'Peroxide attacks boron. This step takes 1 arrow.', [lone('bN', 'oPer')]),
         step('migrate', 'The carbon migrates from boron to oxygen and the peroxide bond breaks. This step takes 2 arrows.', [
-          leave('oPer', 'c3', 'bN', 'c3'),
-          leave('oFar', 'oPer', 'oFar', 'oPer')
+          leave('oPer', 'c3', 'bN'),
+          leave('oFar', 'oPer', 'oFar')
         ]),
         step('cleavage', 'Hydroxide frees the alkoxide from boron. This step takes 2 arrows.', [
           lone('bN', 'oHO'),
-          leave('oAlk', 'oAlk', 'bN', 'bN')
+          leave('oAlk', 'oAlk', 'bN')
         ])
       ]));
   }
@@ -864,8 +865,8 @@ function buildMechanisms() {
       {reactants, cation, product},
       [
         step('reactants', 'The pi bond takes the proton and the H-Br bond breaks. This step takes 2 arrows.', [
-          leave('hX', 'c2', 'c3', 'c2', 'c3'),
-          leave('brX', 'hX', 'brX', 'hX')
+          leave('hX', 'c2', 'c3'),
+          leave('brX', 'hX', 'brX')
         ]),
         step('cation', 'Bromide attacks the carbocation. This step takes 1 arrow.', [lone('c2', 'brX')])
       ]));
@@ -892,13 +893,13 @@ function buildMechanisms() {
       {reactants, bromonium, product},
       [
         step('reactants', 'The pi bond makes the bromonium and the other bromine leaves. This step takes 3 arrows.', [
-          leave('brA', 'r0', 'r1', 'r0', 'r1'),
-          leave('brB', 'brA', 'brB', 'brA'),
+          leave('brA', 'r0', 'r1'),
+          leave('brB', 'brA', 'brB'),
           lone('r1', 'brA')
         ]),
         step('bromonium', 'Bromide attacks a ring carbon from the back and that carbon lets go of the bridge. This step takes 2 arrows.', [
           lone('r0', 'brB'),
-          leave('brA', 'r0', 'brA', 'r0')
+          leave('brA', 'r0', 'brA')
         ])
       ]));
   }
@@ -930,17 +931,17 @@ function buildMechanisms() {
       {reactants, bromonium, oxonium, product},
       [
         step('reactants', 'The pi bond makes the bromonium and bromide leaves. This step takes 3 arrows.', [
-          leave('brA', 'c2', 'c3', 'c2', 'c3'),
-          leave('brB', 'brA', 'brB', 'brA'),
+          leave('brA', 'c2', 'c3'),
+          leave('brB', 'brA', 'brB'),
           lone('c3', 'brA')
         ]),
         step('bromonium', 'Water attacks the more substituted carbon and that carbon lets go of bromine. This step takes 2 arrows.', [
           lone('c2', 'oW'),
-          leave('brA', 'c2', 'brA', 'c2')
+          leave('brA', 'c2', 'brA')
         ]),
         step('oxonium', 'Water takes a proton from the oxonium. This step takes 2 arrows.', [
-          {arrows: [lone('hP', 'oW'), leave('oAdd', 'hP', 'oAdd', 'hP')]},
-          {arrows: [lone('hQ', 'oW'), leave('oAdd', 'hQ', 'oAdd', 'hQ')]}
+          {arrows: [lone('hP', 'oW'), leave('oAdd', 'hP', 'oAdd')]},
+          {arrows: [lone('hQ', 'oW'), leave('oAdd', 'hQ', 'oAdd')]}
         ])
       ]));
   }
@@ -979,10 +980,10 @@ function buildMechanisms() {
       {reactants, product},
       [
         step('reactants', 'All four arrows happen together. This step takes 4 arrows.', [
-          leave('oEp', 'c1', 'c2', 'c1', 'c2'),
-          leave('oC', 'oL', 'oEp', 'oL'),
-          leave('hP', 'cP', 'oC', 'cP'),
-          leave('c2', 'oEp', 'hP', 'oEp')
+          leave('oEp', 'c1', 'c2'),
+          leave('oC', 'oL', 'oEp'),
+          leave('hP', 'cP', 'oC'),
+          leave('c2', 'oEp', 'hP')
         ])
       ]));
   }
@@ -1014,12 +1015,12 @@ function buildMechanisms() {
       {reactants, osmate, product},
       [
         step('reactants', 'Both oxygens add at once. This step takes 2 arrows.', [
-          leave('o1', 'c1', 'c2', 'c1'),
-          leave('c2', 'os', 'o2', 'os')
+          leave('o1', 'c1', 'c2'),
+          leave('c2', 'os', 'o2')
         ]),
         step('osmate', 'Water protonates an osmate oxygen and that oxygen lets go of osmium. The other oxygen is freed the same way. This step takes 2 arrows.', [
           lone('h1', 'o1'),
-          leave('os', 'o1', 'os', 'o1')
+          leave('os', 'o1', 'os')
         ])
       ]));
   }
@@ -1047,14 +1048,14 @@ function buildMechanisms() {
       {reactants, epScene, alkoxide, product},
       [
         step('reactants', 'The epoxidation arrows happen together. This step takes 4 arrows.', [
-          leave('oEp', 'c2', 'c3', 'c2', 'c3'),
-          leave('oC', 'oL', 'oEp', 'oL'),
-          leave('hP', 'cP', 'oC', 'cP'),
-          leave('c3', 'oEp', 'hP', 'oEp')
+          leave('oEp', 'c2', 'c3'),
+          leave('oC', 'oL', 'oEp'),
+          leave('hP', 'cP', 'oC'),
+          leave('c3', 'oEp', 'hP')
         ]),
         step('epScene', 'Hydroxide attacks the less substituted carbon and that carbon lets go of the epoxide oxygen. This step takes 2 arrows.', [
           lone('cL', 'oHO'),
-          leave('oE', 'cL', 'oE', 'cL')
+          leave('oE', 'cL', 'oE')
         ]),
         step('alkoxide', 'Water protonates the alkoxide. This step takes 2 arrows.', protonate('oAlk'))
       ]));
@@ -1073,7 +1074,7 @@ function buildMechanisms() {
       {reactants, product},
       [
         step('reactants', 'The pi bond and the carbene lone pair each make one carbon-carbon bond. This step takes 2 arrows.', [
-          leave('cCar', 'c2', 'c3', 'c2'),
+          leave('cCar', 'c2', 'c3'),
           lone('c3', 'cCar')
         ])
       ]));
@@ -1104,10 +1105,10 @@ function buildMechanisms() {
       [
         step('prep', 'Butoxide takes the proton and chloride leaves from the same carbon. This step takes 2 arrows.', [
           lone('hC', 'oB'),
-          leave('cl3', 'cCl', 'cl3', 'cCl')
+          leave('cl3', 'cCl', 'cl3')
         ]),
         step('add', 'The carbene adds to both alkene carbons. This step takes 2 arrows.', [
-          leave('cCar', 'c2', 'c3', 'c2'),
+          leave('cCar', 'c2', 'c3'),
           lone('c3', 'cCar')
         ])
       ]));
@@ -1151,16 +1152,16 @@ function buildMechanisms() {
       [
         step('reactants', 'Ozone cycloadds to the alkene. This step takes 3 arrows.', [
           lone('c1', 'oL'),
-          leave('oR', 'c1', 'c2', 'c2'),
-          leave('oM', 'oM', 'oR', 'oR')
+          leave('oR', 'c1', 'c2'),
+          leave('oM', 'oM', 'oR')
         ]),
         step('moloz', 'The molozonide fragments. This step takes 2 arrows.', [
-          leave('oL', 'c1', 'c2', 'c1'),
-          leave('oR', 'oL', 'oM', 'oM')
+          leave('oL', 'c1', 'c2'),
+          leave('oR', 'oL', 'oM')
         ]),
         step('reduce', 'Sulfur attacks the terminal oxygen and the peroxide bond breaks. This step takes 2 arrows.', [
           lone('oOut', 'sD'),
-          leave('oIn', 'oIn', 'oOut', 'oOut')
+          leave('oIn', 'oIn', 'oOut')
         ])
       ]));
   }
@@ -1182,7 +1183,7 @@ function buildMechanisms() {
       [
         step('reactants', 'The amide lone pair takes the proton and the C-H bond becomes the lone pair on carbon. This step takes 2 arrows.', [
           lone('hT', 'nA'),
-          leave('c2', 'c2', 'hT', 'hT')
+          leave('c2', 'c2', 'hT')
         ])
       ]));
   }
@@ -1196,6 +1197,15 @@ function buildMechanisms() {
     const o = sprout(atoms[2], 28, {id: 'oH', label: 'O', element: 'O', name: 'the alcohol oxygen', pad: 16}, 66);
     const h = sprout(o, 90, {id: 'hO', label: 'H', element: 'H', name: 'the alcohol hydrogen', pad: 14}, 54);
     return {atoms: [...atoms, o, h], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oH', 1], ['oH', 'hO', 1]], o, h, c2: atoms[1], c3: atoms[2]};
+  }
+  function chromium(x, y) {
+    const cr = A('cr', [x, y], {label: 'Cr', element: 'Cr', name: 'chromium', pad: 16});
+    const oCr = sprout(cr, 95, {id: 'oCr', label: 'O', element: 'O', name: 'an oxo on chromium', pad: 16}, 72);
+    const ohCr = sprout(cr, -55, {id: 'ohCr', label: 'OH', element: 'O', name: 'the hydroxide that leaves', pad: 18}, 92);
+    return {cr, oCr, ohCr};
+  }
+  function beside(atom, dx, dy, spec) {
+    return A(spec.id, [Math.round(atom.x + dx), Math.round(atom.y + dy)], spec);
   }
   function brPair(x, y, idA, idB, nameA, nameB) {
     const a = A(idA, [x, y], {label: 'Br', element: 'Br', name: nameA, pad: 16});
@@ -1277,22 +1287,22 @@ function buildMechanisms() {
       {reactants, brom1, dibromo, brom2, product},
       [
         step('reactants', 'One pi bond makes the bromonium and bromide leaves. This step takes 3 arrows.', [
-          leave('brA', 'c1', 'c2', 'c1', 'c2'),
-          leave('brB', 'brA', 'brB', 'brA'),
+          leave('brA', 'c1', 'c2'),
+          leave('brB', 'brA', 'brB'),
           lone('c2', 'brA')
         ]),
         step('brom1', 'Bromide opens the bromonium. This step takes 2 arrows.', [
           lone('c1', 'brB'),
-          leave('brA', 'c1', 'brA', 'c1')
+          leave('brA', 'c1', 'brA')
         ]),
         step('dibromo', 'The second equivalent makes another bromonium. This step takes 3 arrows.', [
-          leave('brC', 'c1', 'c2', 'c1', 'c2'),
-          leave('brD', 'brC', 'brD', 'brC'),
+          leave('brC', 'c1', 'c2'),
+          leave('brD', 'brC', 'brD'),
           lone('c2', 'brC')
         ]),
         step('brom2', 'Bromide opens that bromonium. This step takes 2 arrows.', [
           lone('c1', 'brD'),
-          leave('brC', 'c1', 'brC', 'c1')
+          leave('brC', 'c1', 'brC')
         ])
       ]));
   }
@@ -1333,13 +1343,13 @@ function buildMechanisms() {
       {reactants, cation, vinyl, cation2, product},
       [
         step('reactants', 'The first pi bond takes the proton and the H-Br bond breaks. This step takes 2 arrows.', [
-          leave('hX', 'c1', 'c2', 'c1', 'c2'),
-          leave('brX', 'hX', 'brX', 'hX')
+          leave('hX', 'c1', 'c2'),
+          leave('brX', 'hX', 'brX')
         ]),
         step('cation', 'Bromide attacks the carbocation. This step takes 1 arrow.', [lone('c1', 'brX')]),
         step('vinyl', 'The second pi bond takes a proton from the next HBr. This step takes 2 arrows.', [
-          leave('hX', 'c1', 'c2', 'c1', 'c2'),
-          leave('brX', 'hX', 'brX', 'hX')
+          leave('hX', 'c1', 'c2'),
+          leave('brX', 'hX', 'brX')
         ]),
         step('cation2', 'Bromide attacks the carbon that already holds bromine. This step takes 1 arrow.', [lone('c1', 'brX')])
       ]));
@@ -1365,12 +1375,12 @@ function buildMechanisms() {
       [
         step('reactants', 'The alcohol takes a proton. This step takes 2 arrows.', [
           lone('hA', 'oH'),
-          leave('oA', 'hA', 'oA', 'hA')
+          leave('oA', 'hA', 'oA')
         ]),
         step('protonated', 'The base takes the beta proton and water leaves. This step takes 3 arrows.', [
           lone('hB', 'oB'),
-          leave('c3', 'c2', 'hB', 'hB'),
-          leave('oAdd', 'c3', 'oAdd', 'c3')
+          leave('c3', 'c2', 'hB'),
+          leave('oAdd', 'c3', 'oAdd')
         ])
       ]));
   }
@@ -1394,11 +1404,11 @@ function buildMechanisms() {
       [
         step('reactants', 'The alcohol oxygen attacks sulfur and chloride leaves. This step takes 2 arrows.', [
           lone('sT', 'oH'),
-          leave('clT', 'sT', 'clT', 'sT')
+          leave('clT', 'sT', 'clT')
         ]),
         step('mid', 'Pyridine takes the proton from oxygen. This step takes 2 arrows.', [
           lone('hO', 'nPy'),
-          leave('oH', 'oH', 'hO', 'hO')
+          leave('oH', 'oH', 'hO')
         ])
       ]));
   }
@@ -1425,11 +1435,11 @@ function buildMechanisms() {
       [
         step('reactants', 'Oxygen attacks sulfur and one chloride leaves. This step takes 2 arrows.', [
           lone('sC', 'oH'),
-          leave('cl2', 'sC', 'cl2', 'sC')
+          leave('cl2', 'sC', 'cl2')
         ]),
         step('subst', 'Chloride attacks carbon and the carbon-oxygen bond breaks. This step takes 2 arrows.', [
           lone('c3', 'cl2'),
-          leave('oH', 'c3', 'oH', 'c3')
+          leave('oH', 'c3', 'oH')
         ])
       ]));
   }
@@ -1456,33 +1466,32 @@ function buildMechanisms() {
       [
         step('reactants', 'Oxygen attacks phosphorus and one bromide leaves. This step takes 2 arrows.', [
           lone('pB', 'oH'),
-          leave('br3', 'pB', 'br3', 'pB')
+          leave('br3', 'pB', 'br3')
         ]),
         step('subst', 'Bromide attacks carbon and the carbon-oxygen bond breaks. This step takes 2 arrows.', [
           lone('c3', 'br3'),
-          leave('oH', 'c3', 'oH', 'c3')
+          leave('oH', 'c3', 'oH')
         ])
       ]));
   }
 
   {
-    const alcohol = roh(100, 260);
-    const hCar = sprout(alcohol.c3, 95, {id: 'hCar', label: 'H', element: 'H', name: 'a carbinol hydrogen', pad: 14}, 58);
-    const cr = A('cr', [530, 160], {label: 'Cr', element: 'Cr', name: 'chromium', pad: 16});
-    const oCr = sprout(cr, 90, {id: 'oCr', label: 'O', element: 'O', name: 'an oxo on chromium', pad: 16}, 54);
-    const ohCr = sprout(cr, 0, {id: 'ohCr', label: 'OH', element: 'O', name: 'the hydroxide that leaves', pad: 18}, 60);
+    const alcohol = roh(90, 210);
+    const hCar = sprout(alcohol.c3, -98, {id: 'hCar', label: 'H', element: 'H', name: 'a carbinol hydrogen', pad: 14}, 68);
+    const {cr, oCr, ohCr} = chromium(540, 168);
     const reactants = join(
-      {atoms: [...alcohol.atoms, hCar, cr, oCr, ohCr], bonds: [...alcohol.bonds, ['c3', 'hCar', 1], ['cr', 'oCr', 2], ['cr', 'ohCr', 1]], texts: [plus(400, 180), T(600, 200, 'PCC')]}
+      {atoms: [...alcohol.atoms, hCar, cr, oCr, ohCr], bonds: [...alcohol.bonds, ['c3', 'hCar', 1], ['cr', 'oCr', 2], ['cr', 'ohCr', 1]], texts: [plus(410, 175), T(oCr.x + 108, oCr.y + 8, 'PCC')]}
     );
     const chain = zz([
       {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22},
       {id: 'c2', name: 'the middle carbon'},
       {id: 'c3', name: 'the carbinol carbon'}
-    ], 130, 250, 28);
-    const o = sprout(chain[2], 28, {id: 'oH', label: 'O', element: 'O', name: 'the chromate ester oxygen', pad: 16}, 62);
-    const hC = sprout(chain[2], 100, {id: 'hCar', label: 'H', element: 'H', name: 'a carbinol hydrogen', pad: 14}, 58);
-    const cr2 = sprout(o, 8, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 58);
-    const chromate = {atoms: [...chain, o, hC, cr2, A('oB', [640, 250], {label: 'N', element: 'N', name: 'the base', pad: 16})], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oH', 1], ['c3', 'hCar', 1], ['oH', 'cr', 1]], texts: [T(680, 250, 'py')]};
+    ], 150, 175, 28);
+    const o = sprout(chain[2], 28, {id: 'oH', label: 'O', element: 'O', name: 'the chromate ester oxygen', pad: 16}, 76);
+    const hC = sprout(chain[2], -98, {id: 'hCar', label: 'H', element: 'H', name: 'a carbinol hydrogen', pad: 14}, 70);
+    const cr2 = sprout(o, -78, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 86);
+    const base = beside(hC, 136, 52, {id: 'oB', label: 'N', element: 'N', name: 'the base', pad: 16});
+    const chromate = {atoms: [...chain, o, hC, cr2, base], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oH', 1], ['c3', 'hCar', 1], ['oH', 'cr', 1]], texts: [T(base.x + 32, base.y + 5, 'py')]};
     const c = A('cCO', [240, 200], {name: 'carbonyl carbon'});
     const product = {atoms: [sprout(c, 210, {id: 'c2', label: 'H₃C', name: 'the chain', pad: 22}), c, sprout(c, 330, {id: 'hAld', label: 'H', element: 'H', name: 'the aldehyde hydrogen', pad: 14}, 60), sprout(c, 90, {id: 'oCO', label: 'O', element: 'O', name: 'carbonyl oxygen', pad: 16}, 68)], bonds: [['c2', 'cCO', 1], ['cCO', 'hAld', 1], ['cCO', 'oCO', 2]]};
     mechanisms.push(mech(23,
@@ -1492,29 +1501,28 @@ function buildMechanisms() {
       [
         step('reactants', 'The alcohol bonds to chromium and hydroxide leaves. This step takes 2 arrows.', [
           lone('cr', 'oH'),
-          leave('ohCr', 'cr', 'ohCr', 'cr')
+          leave('ohCr', 'cr', 'ohCr')
         ]),
         step('chromate', 'The base takes a carbinol hydrogen and the carbonyl forms. This step takes 3 arrows.', [
           lone('hCar', 'oB'),
-          leave('oH', 'c3', 'hCar', 'hCar'),
-          leave('cr', 'oH', 'cr', 'oH')
+          leave('oH', 'c3', 'hCar'),
+          leave('cr', 'oH', 'cr')
         ])
       ]));
   }
 
   {
-    const alcohol = ipa(110, 260, {id: 'oH', label: 'OH', element: 'O', name: 'the alcohol oxygen', pad: 18});
-    const hCar = sprout(alcohol.c2, 15, {id: 'hCar', label: 'H', element: 'H', name: 'the hydrogen on the carbinol carbon', pad: 14}, 54);
-    const cr = A('cr', [520, 170], {label: 'Cr', element: 'Cr', name: 'chromium', pad: 16});
-    const oCr = sprout(cr, 90, {id: 'oCr', label: 'O', element: 'O', name: 'an oxo on chromium', pad: 16}, 56);
-    const ohCr = sprout(cr, 0, {id: 'ohCr', label: 'OH', element: 'O', name: 'the hydroxide that leaves', pad: 18}, 62);
+    const alcohol = ipa(110, 250, {id: 'oH', label: 'OH', element: 'O', name: 'the alcohol oxygen', pad: 18});
+    const hCar = sprout(alcohol.c2, 152, {id: 'hCar', label: 'H', element: 'H', name: 'the hydrogen on the carbinol carbon', pad: 14}, 72);
+    const {cr, oCr, ohCr} = chromium(545, 185);
     const reactants = join(
-      {atoms: [...alcohol.atoms, hCar, cr, oCr, ohCr], bonds: [...alcohol.bonds, ['c2', 'hCar', 1], ['cr', 'oCr', 2], ['cr', 'ohCr', 1]], texts: [plus(400, 190), T(590, 210, 'PCC')]}
+      {atoms: [...alcohol.atoms, hCar, cr, oCr, ohCr], bonds: [...alcohol.bonds, ['c2', 'hCar', 1], ['cr', 'oCr', 2], ['cr', 'ohCr', 1]], texts: [plus(400, 200), T(oCr.x + 108, oCr.y + 8, 'PCC')]}
     );
-    const ester = ipa(130, 270, {id: 'oH', label: 'O', element: 'O', name: 'the chromate ester oxygen', pad: 16});
-    const h2 = sprout(ester.c2, 12, {id: 'hCar', label: 'H', element: 'H', name: 'the hydrogen on the carbinol carbon', pad: 14}, 52);
-    const cr2 = sprout(ester.o, 15, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 60);
-    const chromate = {atoms: [...ester.atoms, h2, cr2, A('oB', [640, 240], {label: 'N', element: 'N', name: 'the base', pad: 16})], bonds: [...ester.bonds, ['c2', 'hCar', 1], ['oH', 'cr', 1]], texts: [T(680, 240, 'py')]};
+    const ester = ipa(160, 275, {id: 'oH', label: 'O', element: 'O', name: 'the chromate ester oxygen', pad: 16});
+    const h2 = sprout(ester.c2, 152, {id: 'hCar', label: 'H', element: 'H', name: 'the hydrogen on the carbinol carbon', pad: 14}, 72);
+    const cr2 = sprout(ester.o, 40, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 86);
+    const base = beside(h2, -16, -82, {id: 'oB', label: 'N', element: 'N', name: 'the base', pad: 16});
+    const chromate = {atoms: [...ester.atoms, h2, cr2, base], bonds: [...ester.bonds, ['c2', 'hCar', 1], ['oH', 'cr', 1]], texts: [T(base.x - 34, base.y + 4, 'py')]};
     mechanisms.push(mech(24,
       'PCC oxidizes the secondary alcohol. The alcohol bonds to chromium, then loss of the carbinol hydrogen makes the ketone.',
       'The product is the ketone.',
@@ -1522,12 +1530,12 @@ function buildMechanisms() {
       [
         step('reactants', 'The alcohol bonds to chromium and hydroxide leaves. This step takes 2 arrows.', [
           lone('cr', 'oH'),
-          leave('ohCr', 'cr', 'ohCr', 'cr')
+          leave('ohCr', 'cr', 'ohCr')
         ]),
         step('chromate', 'The base takes the carbinol hydrogen and the chromium-oxygen bond breaks as the carbonyl forms. This step takes 3 arrows.', [
           lone('hCar', 'oB'),
-          leave('oH', 'c2', 'hCar', 'hCar'),
-          leave('cr', 'oH', 'cr', 'oH')
+          leave('oH', 'c2', 'hCar'),
+          leave('cr', 'oH', 'cr')
         ])
       ]));
   }
@@ -1546,16 +1554,17 @@ function buildMechanisms() {
     const adductO = sprout(adductS, 0, {id: 'oD', label: 'O', element: 'O', name: 'oxygen still on sulfur', pad: 16}, 64);
     const adduct = {atoms: [adductO, adductS, sprout(adductS, 80, {id: 'm1', label: 'H₃C', name: 'a methyl on sulfur', pad: 22}, 62), sprout(adductS, 150, {id: 'm2', label: 'H₃C', name: 'a methyl on sulfur', pad: 22}, 62), A('clX', [420, 210], {label: 'Cl⁻', element: 'Cl', name: 'chloride', pad: 18})], bonds: [['oD', 'sD', 1], ['sD', 'm1', 1], ['sD', 'm2', 1]], texts: [plus(330, 210), T(520, 180, 'CO2, CO')]};
     const ip = ipa(100, 270, {id: 'oH', label: 'OH', element: 'O', name: 'the alcohol oxygen', pad: 18});
-    const hCar = sprout(ip.c2, 12, {id: 'hCar', label: 'H', element: 'H', name: 'the carbinol hydrogen', pad: 14}, 50);
+    const hCar = sprout(ip.c2, 152, {id: 'hCar', label: 'H', element: 'H', name: 'the carbinol hydrogen', pad: 14}, 70);
     const sCl = A('sD', [500, 180], {label: 'S', element: 'S', name: 'sulfur', pad: 16});
     const clS = sprout(sCl, 0, {id: 'clS', label: 'Cl', element: 'Cl', name: 'chlorine on sulfur', pad: 16}, 60);
     const chloro = join(
       {atoms: [...ip.atoms, hCar, sCl, clS, sprout(sCl, 70, {id: 'm1', label: 'H₃C', name: 'a methyl on sulfur', pad: 22}, 58), sprout(sCl, 140, {id: 'm2', label: 'H₃C', name: 'a methyl on sulfur', pad: 22}, 58)], bonds: [...ip.bonds, ['c2', 'hCar', 1], ['sD', 'clS', 1], ['sD', 'm1', 1], ['sD', 'm2', 1]], texts: [plus(400, 200)]}
     );
-    const est = ipa(120, 280, {id: 'oH', label: 'O', element: 'O', name: 'oxygen bonded to sulfur', pad: 16});
-    const h2 = sprout(est.c2, 8, {id: 'hCar', label: 'H', element: 'H', name: 'the carbinol hydrogen', pad: 14}, 50);
-    const s2 = sprout(est.o, 20, {id: 'sD', label: 'S', element: 'S', name: 'sulfur', pad: 16}, 58);
-    const alkoxy = {atoms: [...est.atoms, h2, s2, A('nB', [640, 230], {label: 'N', element: 'N', name: 'pyridine nitrogen', pad: 16})], bonds: [...est.bonds, ['c2', 'hCar', 1], ['oH', 'sD', 1]], texts: [T(680, 230, 'py')]};
+    const est = ipa(150, 300, {id: 'oH', label: 'O', element: 'O', name: 'oxygen bonded to sulfur', pad: 16});
+    const h2 = sprout(est.c2, 152, {id: 'hCar', label: 'H', element: 'H', name: 'the carbinol hydrogen', pad: 14}, 70);
+    const s2 = sprout(est.o, 38, {id: 'sD', label: 'S', element: 'S', name: 'sulfur', pad: 16}, 76);
+    const nB = beside(h2, -8, -80, {id: 'nB', label: 'N', element: 'N', name: 'pyridine nitrogen', pad: 16});
+    const alkoxy = {atoms: [...est.atoms, h2, s2, nB], bonds: [...est.bonds, ['c2', 'hCar', 1], ['oH', 'sD', 1]], texts: [T(nB.x - 34, nB.y + 4, 'py')]};
     mechanisms.push(mech(25,
       'Swern oxidation. DMSO attacks oxalyl chloride, the adduct collapses to the chlorosulfonium ion, the alcohol bonds to sulfur, and pyridine takes the carbinol hydrogen. The sheet uses pyridine as the base.',
       'The product is the ketone. Dimethyl sulfide leaves.',
@@ -1563,20 +1572,20 @@ function buildMechanisms() {
       [
         step('reactants', 'The oxygen of DMSO attacks the oxalyl carbon and chloride leaves. This step takes 2 arrows.', [
           lone('cOx', 'oD'),
-          leave('clX', 'cOx', 'clX', 'cOx')
+          leave('clX', 'cOx', 'clX')
         ]),
         step('adduct', 'Chloride bonds to sulfur and the oxygen leaves with the oxalyl fragment. This step takes 2 arrows.', [
           lone('sD', 'clX'),
-          leave('oD', 'sD', 'oD', 'sD')
+          leave('oD', 'sD', 'oD')
         ]),
         step('chloro', 'The alcohol oxygen attacks sulfur and chloride leaves. This step takes 2 arrows.', [
           lone('sD', 'oH'),
-          leave('clS', 'sD', 'clS', 'sD')
+          leave('clS', 'sD', 'clS')
         ]),
         step('alkoxy', 'Pyridine takes the carbinol hydrogen, the carbonyl forms, and sulfur leaves. This step takes 3 arrows.', [
           lone('hCar', 'nB'),
-          leave('oH', 'c2', 'hCar', 'hCar'),
-          leave('sD', 'oH', 'sD', 'oH')
+          leave('oH', 'c2', 'hCar'),
+          leave('sD', 'oH', 'sD')
         ])
       ]));
   }
@@ -1591,16 +1600,17 @@ function buildMechanisms() {
     const stub = sprout(n, 0, {id: 'cN', label: 'R', name: 'the succinimide', pad: 16}, 58);
     const reactants = join(alcohol, {atoms: [s, m1, m2, cl, n, stub], bonds: [['sD', 'm1', 1], ['sD', 'm2', 1], ['clN', 'nS', 1], ['nS', 'cN', 1]], texts: [plus(300, 210)]});
     const ip = ipa(110, 270, {id: 'oH', label: 'OH', element: 'O', name: 'the alcohol oxygen', pad: 18});
-    const hCar = sprout(ip.c2, 10, {id: 'hCar', label: 'H', element: 'H', name: 'the carbinol hydrogen', pad: 14}, 50);
+    const hCar = sprout(ip.c2, 152, {id: 'hCar', label: 'H', element: 'H', name: 'the carbinol hydrogen', pad: 14}, 70);
     const sCl = A('sD', [500, 180], {label: 'S', element: 'S', name: 'sulfur', pad: 16});
     const clS = sprout(sCl, 0, {id: 'clS', label: 'Cl', element: 'Cl', name: 'chlorine on sulfur', pad: 16}, 58);
     const chloro = join(
       {atoms: [...ip.atoms, hCar, sCl, clS, sprout(sCl, 70, {id: 'm1', label: 'H₃C', name: 'a methyl on sulfur', pad: 22}, 56), sprout(sCl, 140, {id: 'm2', label: 'H₃C', name: 'a methyl on sulfur', pad: 22}, 56)], bonds: [...ip.bonds, ['c2', 'hCar', 1], ['sD', 'clS', 1], ['sD', 'm1', 1], ['sD', 'm2', 1]], texts: [plus(400, 200)]}
     );
-    const est = ipa(120, 280, {id: 'oH', label: 'O', element: 'O', name: 'oxygen bonded to sulfur', pad: 16});
-    const h2 = sprout(est.c2, 8, {id: 'hCar', label: 'H', element: 'H', name: 'the carbinol hydrogen', pad: 14}, 50);
-    const s2 = sprout(est.o, 18, {id: 'sD', label: 'S', element: 'S', name: 'sulfur', pad: 16}, 58);
-    const alkoxy = {atoms: [...est.atoms, h2, s2, A('nB', [650, 220], {label: 'N', element: 'N', name: 'nitrogen of triethylamine', pad: 16})], bonds: [...est.bonds, ['c2', 'hCar', 1], ['oH', 'sD', 1]], texts: [T(700, 220, 'Et3N')]};
+    const est = ipa(160, 300, {id: 'oH', label: 'O', element: 'O', name: 'oxygen bonded to sulfur', pad: 16});
+    const h2 = sprout(est.c2, 152, {id: 'hCar', label: 'H', element: 'H', name: 'the carbinol hydrogen', pad: 14}, 70);
+    const s2 = sprout(est.o, 38, {id: 'sD', label: 'S', element: 'S', name: 'sulfur', pad: 16}, 76);
+    const nB = beside(h2, -6, -82, {id: 'nB', label: 'N', element: 'N', name: 'nitrogen of triethylamine', pad: 16});
+    const alkoxy = {atoms: [...est.atoms, h2, s2, nB], bonds: [...est.bonds, ['c2', 'hCar', 1], ['oH', 'sD', 1]], texts: [T(nB.x - 48, nB.y + 4, 'Et3N')]};
     mechanisms.push(mech(26,
       'Corey-Kim oxidation. Sulfur of DMS attacks chlorine of NCS, the alcohol bonds to sulfur, and triethylamine takes the carbinol hydrogen.',
       'The product is the ketone.',
@@ -1608,36 +1618,35 @@ function buildMechanisms() {
       [
         step('reactants', 'Sulfur attacks chlorine and the N-Cl bond breaks onto nitrogen. This step takes 2 arrows.', [
           lone('clN', 'sD'),
-          leave('nS', 'nS', 'clN', 'clN')
+          leave('nS', 'nS', 'clN')
         ]),
         step('chloro', 'The alcohol oxygen attacks sulfur and chloride leaves. This step takes 2 arrows.', [
           lone('sD', 'oH'),
-          leave('clS', 'sD', 'clS', 'sD')
+          leave('clS', 'sD', 'clS')
         ]),
         step('alkoxy', 'Triethylamine takes the carbinol hydrogen and the carbonyl forms. This step takes 3 arrows.', [
           lone('hCar', 'nB'),
-          leave('oH', 'c2', 'hCar', 'hCar'),
-          leave('sD', 'oH', 'sD', 'oH')
+          leave('oH', 'c2', 'hCar'),
+          leave('sD', 'oH', 'sD')
         ])
       ]));
   }
 
   {
-    const alcohol = roh(80, 250);
-    const hCar = sprout(alcohol.c3, 95, {id: 'hCar', label: 'H', element: 'H', name: 'a carbinol hydrogen', pad: 14}, 58);
-    const cr = A('cr', [500, 160], {label: 'Cr', element: 'Cr', name: 'chromium', pad: 16});
-    const oCr = sprout(cr, 90, {id: 'oCr', label: 'O', element: 'O', name: 'an oxo on chromium', pad: 16}, 52);
-    const ohCr = sprout(cr, 0, {id: 'ohCr', label: 'OH', element: 'O', name: 'the hydroxide that leaves', pad: 18}, 58);
-    const reactants = join({atoms: [...alcohol.atoms, hCar, cr, oCr, ohCr], bonds: [...alcohol.bonds, ['c3', 'hCar', 1], ['cr', 'oCr', 2], ['cr', 'ohCr', 1]], texts: [plus(380, 180), T(560, 210, 'H2CrO4')]});
+    const alcohol = roh(80, 210);
+    const hCar = sprout(alcohol.c3, -98, {id: 'hCar', label: 'H', element: 'H', name: 'a carbinol hydrogen', pad: 14}, 68);
+    const {cr, oCr, ohCr} = chromium(520, 168);
+    const reactants = join({atoms: [...alcohol.atoms, hCar, cr, oCr, ohCr], bonds: [...alcohol.bonds, ['c3', 'hCar', 1], ['cr', 'oCr', 2], ['cr', 'ohCr', 1]], texts: [plus(390, 175), T(oCr.x + 118, oCr.y + 10, 'H2CrO4')]});
     const chain = zz([
       {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22},
       {id: 'c2', name: 'the middle carbon'},
       {id: 'c3', name: 'the carbinol carbon'}
-    ], 120, 250, 28);
-    const o = sprout(chain[2], 24, {id: 'oH', label: 'O', element: 'O', name: 'the chromate ester oxygen', pad: 16}, 60);
-    const hC = sprout(chain[2], 100, {id: 'hCar', label: 'H', element: 'H', name: 'a carbinol hydrogen', pad: 14}, 58);
-    const cr2 = sprout(o, 8, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 56);
-    const chromate = {atoms: [...chain, o, hC, cr2, A('oB', [600, 250], {label: 'O', element: 'O', name: 'water acting as the base', pad: 16})], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oH', 1], ['c3', 'hCar', 1], ['oH', 'cr', 1]]};
+    ], 145, 175, 28);
+    const o = sprout(chain[2], 28, {id: 'oH', label: 'O', element: 'O', name: 'the chromate ester oxygen', pad: 16}, 76);
+    const hC = sprout(chain[2], -98, {id: 'hCar', label: 'H', element: 'H', name: 'a carbinol hydrogen', pad: 14}, 70);
+    const cr2 = sprout(o, -78, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 86);
+    const waterBase = beside(hC, 136, 52, {id: 'oB', label: 'O', element: 'O', name: 'water acting as the base', pad: 16});
+    const chromate = {atoms: [...chain, o, hC, cr2, waterBase], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oH', 1], ['c3', 'hCar', 1], ['oH', 'cr', 1]]};
     const aldC = A('cCO', [180, 200], {name: 'carbonyl carbon'});
     const ald = join(
       {atoms: [sprout(aldC, 210, {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22}), aldC, sprout(aldC, 330, {id: 'hAld', label: 'H', element: 'H', name: 'the aldehyde hydrogen', pad: 14}, 58), sprout(aldC, 90, {id: 'oCO', label: 'O', element: 'O', name: 'carbonyl oxygen', pad: 16}, 66)], bonds: [['c1', 'cCO', 1], ['cCO', 'hAld', 1], ['cCO', 'oCO', 2]]},
@@ -1658,35 +1667,35 @@ function buildMechanisms() {
     const hQ = sprout(hyd.atoms[3], 40, {id: 'hQ', label: 'H', element: 'H', name: 'a hydrogen on the oxonium', pad: 14}, 48);
     hyd.atoms.push(hP, hQ);
     hyd.bonds = [['c1', 'cC', 1], ['cC', 'hCar', 1], ['cC', 'oAdd', 1], ['cC', 'oAlk', 1], ['oAdd', 'hP', 1], ['oAdd', 'hQ', 1]];
-    const cN = A('cC', [180, 240], {name: 'the hydrate carbon'});
-    const crN = A('cr', [540, 160], {label: 'Cr', element: 'Cr', name: 'chromium', pad: 16});
+    const cN = A('cC', [170, 230], {name: 'the hydrate carbon'});
+    const {cr: crN, oCr: oCrN, ohCr: ohCrN} = chromium(500, 165);
     const neutralScene = {
       atoms: [
         sprout(cN, 200, {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22}),
         cN,
-        sprout(cN, 310, {id: 'hCar', label: 'H', element: 'H', name: 'the hydrogen on carbon', pad: 14}, 52),
-        sprout(cN, 80, {id: 'oA', label: 'OH', element: 'O', name: 'one hydroxyl', pad: 18}, 64),
-        sprout(cN, 25, {id: 'oBnd', label: 'OH', element: 'O', name: 'the hydroxyl that will bond to chromium', pad: 18}, 64),
-        crN,
-        sprout(crN, 90, {id: 'oCr', label: 'O', element: 'O', name: 'an oxo on chromium', pad: 16}, 52),
-        sprout(crN, -15, {id: 'ohCr', label: 'OH', element: 'O', name: 'the hydroxide that leaves', pad: 18}, 58)
+        sprout(cN, 300, {id: 'hCar', label: 'H', element: 'H', name: 'the hydrogen on carbon', pad: 14}, 66),
+        sprout(cN, 105, {id: 'oA', label: 'OH', element: 'O', name: 'one hydroxyl', pad: 18}, 70),
+        sprout(cN, 35, {id: 'oBnd', label: 'OH', element: 'O', name: 'the hydroxyl that will bond to chromium', pad: 18}, 72),
+        crN, oCrN, ohCrN
       ],
       bonds: [['c1', 'cC', 1], ['cC', 'hCar', 1], ['cC', 'oA', 1], ['cC', 'oBnd', 1], ['cr', 'oCr', 2], ['cr', 'ohCr', 1]],
-      texts: [plus(420, 200)]
+      texts: [plus(370, 175)]
     };
-    const cE = A('cC', [160, 250], {name: 'the carbon of the chromate ester'});
-    const oE = sprout(cE, 15, {id: 'oH', label: 'O', element: 'O', name: 'the oxygen bonded to chromium', pad: 16}, 60);
-    const crE = sprout(oE, 10, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 56);
+    const cE = A('cC', [180, 225], {name: 'the carbon of the chromate ester'});
+    const oE = sprout(cE, 30, {id: 'oH', label: 'O', element: 'O', name: 'the oxygen bonded to chromium', pad: 16}, 74);
+    const crE = sprout(oE, -50, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 90);
+    const hReady = sprout(cE, 300, {id: 'hCar', label: 'H', element: 'H', name: 'the hydrogen on carbon', pad: 14}, 68);
+    const baseReady = beside(hReady, 118, 42, {id: 'oB', label: 'O', element: 'O', name: 'water acting as the base', pad: 16});
     const ready = {
       atoms: [
-        sprout(cE, 200, {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22}),
+        sprout(cE, 205, {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22}),
         cE,
-        sprout(cE, 300, {id: 'hCar', label: 'H', element: 'H', name: 'the hydrogen on carbon', pad: 14}, 52),
-        sprout(cE, 75, {id: 'oA', label: 'OH', element: 'O', name: 'the hydroxyl that stays', pad: 18}, 62),
+        hReady,
+        sprout(cE, 118, {id: 'oA', label: 'OH', element: 'O', name: 'the hydroxyl that stays', pad: 18}, 70),
         oE,
         crE,
-        sprout(crE, 100, {id: 'oCr', label: 'O', element: 'O', name: 'an oxo on chromium', pad: 16}, 50),
-        A('oB', [640, 260], {label: 'O', element: 'O', name: 'water acting as the base', pad: 16})
+        sprout(crE, 75, {id: 'oCr', label: 'O', element: 'O', name: 'an oxo on chromium', pad: 16}, 68),
+        baseReady
       ],
       bonds: [['c1', 'cC', 1], ['cC', 'hCar', 1], ['cC', 'oA', 1], ['cC', 'oH', 1], ['oH', 'cr', 1], ['cr', 'oCr', 2]]
     };
@@ -1699,29 +1708,29 @@ function buildMechanisms() {
       [
         step('reactants', 'The alcohol bonds to chromium and hydroxide leaves. This step takes 2 arrows.', [
           lone('cr', 'oH'),
-          leave('ohCr', 'cr', 'ohCr', 'cr')
+          leave('ohCr', 'cr', 'ohCr')
         ]),
         step('chromate', 'The base takes a carbinol hydrogen and the aldehyde forms. This step takes 3 arrows.', [
           lone('hCar', 'oB'),
-          leave('oH', 'c3', 'hCar', 'hCar'),
-          leave('cr', 'oH', 'cr', 'oH')
+          leave('oH', 'c3', 'hCar'),
+          leave('cr', 'oH', 'cr')
         ]),
         step('ald', 'Water adds to the aldehyde. This step takes 2 arrows.', [
           lone('cCO', 'oW'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('hyd', 'The alkoxide takes a proton from the oxonium. This step takes 2 arrows.', [
-          {arrows: [lone('hP', 'oAlk'), leave('oAdd', 'hP', 'oAdd', 'hP')]},
-          {arrows: [lone('hQ', 'oAlk'), leave('oAdd', 'hQ', 'oAdd', 'hQ')]}
+          {arrows: [lone('hP', 'oAlk'), leave('oAdd', 'hP', 'oAdd')]},
+          {arrows: [lone('hQ', 'oAlk'), leave('oAdd', 'hQ', 'oAdd')]}
         ]),
         step('neutral', 'One hydroxyl bonds to chromium and hydroxide leaves. This step takes 2 arrows.', [
           lone('cr', 'oBnd'),
-          leave('ohCr', 'cr', 'ohCr', 'cr')
+          leave('ohCr', 'cr', 'ohCr')
         ]),
         step('ready', 'The base takes the hydrogen on carbon and the carbonyl of the acid forms. This step takes 3 arrows.', [
           lone('hCar', 'oB'),
-          leave('oH', 'cC', 'hCar', 'hCar'),
-          leave('cr', 'oH', 'cr', 'oH')
+          leave('oH', 'cC', 'hCar'),
+          leave('cr', 'oH', 'cr')
         ])
       ]));
   }
@@ -1744,11 +1753,11 @@ function buildMechanisms() {
       [
         step('reactants', 'The alcohol oxygen attacks silicon and chloride leaves. This step takes 2 arrows.', [
           lone('si', 'oH'),
-          leave('clS', 'si', 'clS', 'si')
+          leave('clS', 'si', 'clS')
         ]),
         step('mid', 'Imidazole takes the proton from oxygen. This step takes 2 arrows.', [
           lone('hO', 'nIm'),
-          leave('oH', 'oH', 'hO', 'hO')
+          leave('oH', 'oH', 'hO')
         ])
       ]));
   }
@@ -1764,7 +1773,7 @@ function buildMechanisms() {
       [
         step('reactants', 'Hydroxide attacks carbon and bromide leaves. This step takes 2 arrows.', [
           lone('c3', 'oNu'),
-          leave('brX', 'c3', 'brX', 'c3')
+          leave('brX', 'c3', 'brX')
         ])
       ]));
   }
@@ -1797,11 +1806,11 @@ function buildMechanisms() {
       [
         step('reactants', 'Hydride takes the alcohol proton. This step takes 2 arrows.', [
           lone('hO', 'hH'),
-          leave('oH', 'oH', 'hO', 'hO')
+          leave('oH', 'oH', 'hO')
         ]),
         step('alkoxide', 'The alkoxide attacks carbon and bromide leaves. This step takes 2 arrows.', [
           lone('cE2', 'oH'),
-          leave('brE', 'cE2', 'brE', 'cE2')
+          leave('brE', 'cE2', 'brE')
         ])
       ]));
   }
@@ -1825,7 +1834,7 @@ function buildMechanisms() {
       [
         step('reactants', 'Carbon bonds to magnesium and bromine bonds to magnesium. This step takes 3 arrows.', [
           lone('c3', 'mg'),
-          leave('brX', 'c3', 'brX', 'c3'),
+          leave('brX', 'c3', 'brX'),
           lone('brX', 'mg')
         ])
       ]));
@@ -1858,15 +1867,15 @@ function buildMechanisms() {
       [
         step('reactants', 'The epoxide oxygen takes a proton. This step takes 2 arrows.', [
           lone('hA', 'oE'),
-          leave('oA', 'hA', 'oA', 'hA')
+          leave('oA', 'hA', 'oA')
         ]),
         step('protonated', 'Water attacks the more substituted carbon and that carbon-oxygen bond breaks. This step takes 2 arrows.', [
           lone('cM', 'oW'),
-          leave('oE', 'cM', 'oE', 'cM')
+          leave('oE', 'cM', 'oE')
         ]),
         step('opened', 'Water takes a proton from the oxonium. This step takes 2 arrows.', [
-          {arrows: [lone('hP', 'oW'), leave('oAdd', 'hP', 'oAdd', 'hP')]},
-          {arrows: [lone('hQ', 'oW'), leave('oAdd', 'hQ', 'oAdd', 'hQ')]}
+          {arrows: [lone('hP', 'oW'), leave('oAdd', 'hP', 'oAdd')]},
+          {arrows: [lone('hQ', 'oW'), leave('oAdd', 'hQ', 'oAdd')]}
         ])
       ]));
   }
@@ -1905,7 +1914,7 @@ function buildMechanisms() {
         step('reactants', 'The epoxide oxygen bonds to boron. This step takes 1 arrow.', [lone('bL', 'oE')]),
         step('coordinated', 'Methoxide attacks the more substituted carbon, that carbon-oxygen bond breaks, and boron leaves. This step takes 3 arrows.', [
           lone('cM', 'oNu'),
-          leave('oE', 'cM', 'oE', 'cM'),
+          leave('oE', 'cM', 'oE'),
           leave('oE', 'oE', 'bL')
         ]),
         step('alkoxide', 'Water protonates the alkoxide. This step takes 2 arrows.', protonate('oAlk'))
@@ -1935,7 +1944,7 @@ function buildMechanisms() {
       [
         step('reactants', 'Methoxide attacks the less substituted carbon and that carbon-oxygen bond breaks. This step takes 2 arrows.', [
           lone('cL', 'oNu'),
-          leave('oE', 'cL', 'oE', 'cL')
+          leave('oE', 'cL', 'oE')
         ]),
         step('alkoxide', 'Water protonates the alkoxide. This step takes 2 arrows.', protonate('oAlk'))
       ]));
@@ -1952,8 +1961,8 @@ function buildMechanisms() {
       {reactants, alkoxide, product: ipa(200, 240, {id: 'oH', label: 'OH', element: 'O', name: 'the alcohol oxygen', pad: 18})},
       [
         step('reactants', 'Hydride attacks the less substituted carbon and that carbon-oxygen bond breaks. This step takes 2 arrows.', [
-          leave('cL', 'hH', 'mH', 'hH'),
-          leave('oE', 'cL', 'oE', 'cL')
+          leave('cL', 'hH', 'mH'),
+          leave('oE', 'cL', 'oE')
         ]),
         step('alkoxide', 'Water protonates the alkoxide. This step takes 2 arrows.', protonate('oAlk'))
       ]));
@@ -2021,16 +2030,16 @@ function buildMechanisms() {
       {reactants, tetra: tetraScene, aldehyde, both, afterOne, product},
       [
         step('reactants', 'Hydride attacks the carbonyl carbon and the pi bond goes to oxygen. This step takes 2 arrows.', [
-          leave('cCO', 'hH', 'mH', 'hH'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('cCO', 'hH', 'mH'),
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('tetra', 'The alkoxide electrons form the carbonyl and the alkoxy group leaves. Click the alkoxide oxygen, then the carbon. This step takes 2 arrows.', [
           lone('cC', 'oAlk'),
-          leave('oR', 'cC', 'oR', 'cC')
+          leave('oR', 'cC', 'oR')
         ]),
         step('aldehyde', 'The second hydride attacks the aldehyde. This step takes 2 arrows.', [
-          leave('cCO', 'hH', 'mH', 'hH'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('cCO', 'hH', 'mH'),
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('both', 'Water protonates the alkoxide from the reduced chain. This step takes 2 arrows.', protonate('oAlk')),
         step('afterOne', 'Water protonates methoxide. This step takes 2 arrows.', protonate('oR'))
@@ -2065,8 +2074,8 @@ function buildMechanisms() {
       {reactants, alkoxide, product: {atoms: prod.atoms, bonds: prod.bonds}},
       [
         step('reactants', 'Hydride attacks the carbonyl carbon and the pi bond goes to oxygen. This step takes 2 arrows.', [
-          leave('cCO', 'hH', 'mH', 'hH'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('cCO', 'hH', 'mH'),
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('alkoxide', 'Water protonates the alkoxide. This step takes 2 arrows.', protonate('oAlk'))
       ]));
@@ -2093,8 +2102,8 @@ function buildMechanisms() {
       {reactants, alkoxide, product: primary(200, 230, {id: 'oH', label: 'OH', element: 'O', name: 'the alcohol oxygen', pad: 18})},
       [
         step('reactants', 'The carbon-magnesium bond attacks the carbonyl carbon and the pi bond goes to oxygen. This step takes 2 arrows.', [
-          leave('cCO', 'cAlpha', 'mg', 'cAlpha'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('cCO', 'cAlpha', 'mg'),
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('alkoxide', 'The alkoxide has formed. ⁺MgBr is the counterion. This step takes 2 arrows.', protonate('oAlk'))
       ]));
@@ -2129,8 +2138,8 @@ function buildMechanisms() {
       {reactants, alkoxide, product: {atoms: [...prod.atoms, tailP], bonds: [...prod.bonds, ['cAlpha', 'cBeta', 1]], texts: [T(520, 390, 'HOMgBr')]}},
       [
         step('reactants', 'The carbon-magnesium bond attacks the carbonyl carbon and the pi bond goes to oxygen. This step takes 2 arrows.', [
-          leave('cCO', 'cAlpha', 'mg', 'cAlpha'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('cCO', 'cAlpha', 'mg'),
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('alkoxide', 'The alkoxide has formed. ⁺MgBr is the counterion. This step takes 2 arrows.', protonate('oAlk'))
       ]));
@@ -2169,8 +2178,8 @@ function buildMechanisms() {
       {reactants, alkoxide, product},
       [
         step('reactants', 'This step takes 2 arrows.', [
-          leave('cCO', 'cAlpha', 'mg', 'cAlpha'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('cCO', 'cAlpha', 'mg'),
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('alkoxide', 'The alkoxide has formed. ⁺MgBr is the counterion. This step takes 2 arrows.', protonate('oAlk'))
       ]));
@@ -2225,16 +2234,16 @@ function buildMechanisms() {
       {reactants, tetra: tetraScene, ketone: ketoneScene, sec: secScene, product},
       [
         step('reactants', 'The first carbon-magnesium bond attacks the carbonyl. This step takes 2 arrows.', [
-          leave('cCO', 'cAlpha', 'mg', 'cAlpha'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('cCO', 'cAlpha', 'mg'),
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('tetra', 'The alkoxide electrons form the carbonyl and the alkoxy group leaves. Click the alkoxide oxygen, then the carbon. This step takes 2 arrows.', [
           lone('cC', 'oAlk'),
-          leave('oR', 'cC', 'oR', 'cC')
+          leave('oR', 'cC', 'oR')
         ]),
         step('ketone', 'The second Grignard attacks the ketone. This step takes 2 arrows.', [
-          leave('cCO', 'cA2', 'mg2', 'cA2'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('cCO', 'cA2', 'mg2'),
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('sec', 'Water protonates the alkoxide. This step takes 2 arrows.', protonate('oAlk'))
       ]));
@@ -2296,16 +2305,16 @@ function buildMechanisms() {
       [
         step('reactants', 'The organolithium carbon takes the acid proton. This step takes 2 arrows.', [
           lone('hO', 'cR'),
-          leave('oH', 'oH', 'hO', 'hO')
+          leave('oH', 'oH', 'hO')
         ]),
         step('carboxylate', 'The second organolithium attacks the carbonyl. This step takes 2 arrows.', [
-          leave('cCO', 'cR2', 'li2', 'cR2'),
-          leave('oCO', 'cCO', 'oCO', 'cCO')
+          leave('cCO', 'cR2', 'li2'),
+          leave('oCO', 'cCO', 'oCO')
         ]),
         step('dianion', 'Water protonates one oxygen. The dianion does not collapse before this. This step takes 2 arrows.', protonate('o1')),
         step('mono', 'The remaining alkoxide forms the carbonyl and the hydroxyl leaves. Click the alkoxide oxygen, then the carbon. This step takes 2 arrows.', [
           lone('cC', 'oAlk'),
-          leave('oH', 'cC', 'oH', 'cC')
+          leave('oH', 'cC', 'oH')
         ])
       ]));
   }
@@ -2337,12 +2346,12 @@ function buildMechanisms() {
       {reactants, alkene, product},
       [
         step('reactants', 'One pi bond takes one hydrogen and the H-H bond bonds to the other carbon. This step takes 2 arrows.', [
-          leave('h1', 'c1', 'c2', 'c1'),
-          leave('c2', 'h1', 'h2', 'h2')
+          leave('h1', 'c1', 'c2'),
+          leave('c2', 'h1', 'h2')
         ]),
         step('alkene', 'The second equivalent does the same to the remaining pi bond. This step takes 2 arrows.', [
-          leave('h3', 'c1', 'c2', 'c1'),
-          leave('c2', 'h3', 'h4', 'h4')
+          leave('h3', 'c1', 'c2'),
+          leave('c2', 'h3', 'h4')
         ])
       ]));
   }

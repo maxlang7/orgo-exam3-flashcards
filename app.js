@@ -1,11 +1,17 @@
 const key = 'orgo-exam3-confidence-v1';
-let state = {};
-try {
-  const saved = JSON.parse(localStorage.getItem(key));
-  if (saved && typeof saved === 'object') {
-    for (const card of deck) if ([1, 2, 3, 4].includes(saved[card.id])) state[card.id] = saved[card.id];
-  }
-} catch {}
+const mechanismKey = 'orgo-exam3-mechanism-confidence-v1';
+function loadRatings(storageKey) {
+  const ratings = {};
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey));
+    for (const card of deck) {
+      if ([1, 2, 3, 4].includes(saved?.[card.id])) ratings[card.id] = saved[card.id];
+    }
+  } catch {}
+  return ratings;
+}
+const ratings = {reaction: loadRatings(key), mechanism: loadRatings(mechanismKey)};
+function ratingGroup() { return options.mode === 'mechanism' ? 'mechanism' : 'reaction'; }
 const $ = id => document.getElementById(id);
 const settingsKey = 'orgo-exam3-settings-v1';
 const options = {mode: 'mixed', topic: 'all', order: 'adaptive'};
@@ -30,14 +36,14 @@ function practiceDeck() {
 function updateProgress() {
   const pool = practiceDeck();
   const noun = options.mode === 'mechanism' ? 'mechanisms' : 'reactions';
-  $('progress').textContent = `${pool.filter(card => state[card.id]).length} / ${pool.length} ${noun} rated`;
+  $('progress').textContent = `${pool.filter(card => ratings[ratingGroup()][card.id]).length} / ${pool.length} ${noun} rated`;
 }
-let current, mode, revealed = false, last = null, count = 0, attempt = null, advanceTimer = 0, advanceToken = 0;
-function save() { try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }
+let current, mode, revealed = false, last = null, count = 0, attempt = null;
+function save() { try { localStorage.setItem(options.mode === 'mechanism' ? mechanismKey : key, JSON.stringify(ratings[ratingGroup()])); } catch {} }
 function choose() {
   const available = practiceDeck();
   const candidates = available.length > 1 ? available.filter(card => card.id !== last) : available;
-  const weights = candidates.map(card => options.order === 'random' ? 1 : [8, 5, 3, 1][(state[card.id] || 1) - 1]);
+  const weights = candidates.map(card => options.order === 'random' ? 1 : [8, 5, 3, 1][(ratings[ratingGroup()][card.id] || 1) - 1]);
   let pick = Math.random() * weights.reduce((sum, weight) => sum + weight, 0);
   return candidates.find((card, index) => (pick -= weights[index]) < 0) || candidates.at(-1);
 }
@@ -57,7 +63,6 @@ function drawReaction() {
   updateVisibility();
 }
 function next() {
-  clearTimeout(advanceTimer);
   revealed = false;
   updateProgress();
   const pool = practiceDeck();
@@ -91,7 +96,7 @@ function startMechanism() {
   $('practice-content').hidden = true;
   $('mechanism').hidden = false;
   $('reveal').hidden = true;
-  $('mode-label').textContent = 'Draw the mechanism';
+  $('mode-label').textContent = 'Mechanism practice · In development';
   $('question').textContent = current.name;
   paintMechanism();
 }
@@ -99,29 +104,27 @@ function paintMechanism() {
   const view = attempt.view();
   renderMechanism($('mech-svg'), view);
   $('instruction').textContent = view.prompt;
+  $('mech-step').textContent = view.finished ? 'Product' : `Step ${view.stepNumber} of ${view.stepCount}`;
+  $('mech-flow').hidden = view.locked;
+  $('mech-from').classList.toggle('active', !view.selectedId);
+  $('mech-to').classList.toggle('active', Boolean(view.selectedId));
   $('mech-source').textContent = view.source;
   $('mech-status').textContent = view.status;
   $('mech-status').classList.toggle('is-bad', view.bad);
   $('mech-undo').disabled = !view.canUndo;
-  $('mech-show').hidden = view.finished || (view.stepComplete && !view.peeked);
-  $('mech-show').textContent = view.peeked ? 'Continue' : 'Show this step';
+  $('mech-show').hidden = view.finished;
+  $('mech-show').textContent = view.locked ? (view.stepNumber === view.stepCount ? 'See product' : 'Next step') : 'Show this step';
   $('solution').hidden = !view.finished;
   if (view.finished) revealed = true;
 }
-function scheduleAdvance() {
-  const token = ++advanceToken;
-  clearTimeout(advanceTimer);
-  advanceTimer = setTimeout(() => {
-    if (token !== advanceToken || !attempt) return;
-    attempt.advance();
-    paintMechanism();
-  }, 650);
-}
 function onMechanismAtom(id) {
-  if (!attempt) return;
-  const result = attempt.click(id);
+  if (!attempt || attempt.click(id).ignored) return;
+  const keyboardFocus = $('mech-svg').contains(document.activeElement);
   paintMechanism();
-  if (result.doneStep) scheduleAdvance();
+  if (keyboardFocus) {
+    const target = attempt.view().locked ? $('mech-show') : $('mech-svg').querySelector(`[data-id="${CSS.escape(id)}"]`);
+    target?.focus();
+  }
 }
 function reveal() {
   if (options.mode === 'mechanism' || !current || revealed) return;
@@ -130,15 +133,15 @@ function reveal() {
 }
 function rate(rating) {
   if (!current || !revealed || ![1, 2, 3, 4].includes(rating)) return;
-  state[current.id] = rating; save();
+  ratings[ratingGroup()][current.id] = rating; save();
   $('feedback').textContent = `Saved · ${rating * 25}% confidence. ${options.order === 'random' ? 'Continuing with equal card selection.' : rating < 3 ? 'You’ll see that reaction more often.' : rating === 4 ? 'That reaction will appear less often.' : 'Keep practicing to make it stick.'}`;
   next();
 }
 $('reveal').onclick = reveal;
 document.querySelectorAll('[data-rating]').forEach(button => button.onclick = () => rate(Number(button.dataset.rating)));
 $('reset').onclick = () => {
-  if (confirm('Clear all confidence ratings on this device?')) {
-    state = {}; save(); $('feedback').textContent = 'Progress cleared. Start fresh.'; next();
+  if (confirm(`Clear all ${ratingGroup()} confidence ratings on this device?`)) {
+    ratings[ratingGroup()] = {}; save(); $('feedback').textContent = 'Progress cleared. Start fresh.'; next();
   }
 };
 for (const [name, id] of Object.entries({mode: 'practice-mode', order: 'practice-order'})) {
@@ -182,12 +185,6 @@ for (const [topic, name] of Object.entries(groupNames)) {
     const input = document.createElement('input'); input.type = 'checkbox'; input.checked = selected.has(card.id);
     input.onchange = () => { input.checked ? selected.add(card.id) : selected.delete(card.id); selectionChanged(); };
     label.append(input, document.createTextNode(card.name));
-    if (mechanismFor(card.id)) {
-      const tag = document.createElement('span');
-      tag.className = 'mech-tag';
-      tag.textContent = 'mechanism';
-      label.append(tag);
-    }
     group.append(label); cardInputs.set(card.id, input);
   }
   $('reaction-checklist').append(group);
@@ -207,16 +204,13 @@ $('mech-svg').addEventListener('keydown', event => {
 });
 $('mech-undo').onclick = () => {
   if (!attempt) return;
-  advanceToken++;
-  clearTimeout(advanceTimer);
   attempt.undo();
   paintMechanism();
 };
 $('mech-show').onclick = () => {
   if (!attempt) return;
-  advanceToken++;
-  clearTimeout(advanceTimer);
   if (attempt.view().peeked) attempt.continueAfterPeek();
+  else if (attempt.view().stepComplete) attempt.advance();
   else attempt.reveal();
   paintMechanism();
 };
