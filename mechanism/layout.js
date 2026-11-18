@@ -49,7 +49,9 @@ function layoutScene(source, compact) {
     const right = Math.max(...atoms.map(a => a.x + Math.max(15, labelWidth(a)/2)));
     const top = Math.min(...atoms.map(a => a.y)) - 18;
     const bottom = Math.max(...atoms.map(a => a.y)) + 18;
-    return {atoms, left, top, width: right-left, height: bottom-top};
+    const caption = group.find(atom => atom.shorthand)?.shorthand;
+    const width = Math.max(right-left, caption ? caption.length * 10 : 0);
+    return {atoms, left:(left+right-width)/2, top, width, caption, height:bottom-top+(caption ? 26 : 0)};
   });
   const gap = 64;
   const stack = compact && groups.reduce((sum,g) => sum + g.width, gap*(groups.length-1)) > 440;
@@ -60,6 +62,9 @@ function layoutScene(source, compact) {
     const x = stack ? (cross-group.width)/2 : offset;
     const y = stack ? offset : (cross-group.height)/2;
     for (const atom of group.atoms) atoms.push({...atom, x: atom.x-group.left+x, y: atom.y-group.top+y});
+    if (group.caption) texts.push({
+      className:'mech-caption', text:group.caption, x:x+group.width/2, y:y+group.height-5
+    });
     offset += (stack ? group.height : group.width) + gap;
     if (group !== groups.at(-1)) texts.push({className:'mech-plus', text:'+', x:stack ? cross/2 : offset-gap/2, y:(stack ? offset-gap/2 : cross/2)+6});
   }

@@ -21,6 +21,7 @@ function buildMechanisms() {
       name: opts.name || id
     };
     if (label) atom.label = label;
+    if (opts.shorthand) atom.shorthand = opts.shorthand;
     return atom;
   }
   function sprout(base, deg, opts, len) {
@@ -74,13 +75,36 @@ function buildMechanisms() {
   function pyridine(nitrogenId, x, y, nitrogenOnRight = false) {
     const radius = 48;
     const centerX = x + (nitrogenOnRight ? -radius : radius);
-    const atoms = [A(nitrogenId, [x, y], {element: 'N', label: 'N', name: 'pyridine nitrogen'})];
+    const atoms = [A(nitrogenId, [x, y], {shorthand: 'Py', element: 'N', label: 'N', name: 'pyridine nitrogen'})];
     for (let i = 1; i < 6; i++) {
       const angle = (nitrogenOnRight ? 0 : 180) - i * 60;
       atoms.push(A(`pyC${i}`, P(centerX, y, angle, radius), {name: 'pyridine ring carbon'}));
     }
     const bonds = atoms.map((atom, i) => [atom.id, atoms[(i + 1) % 6].id, i % 2 === 0 ? 2 : 1]);
     return {atoms, bonds};
+  }
+  function imidazole(x, y) {
+    const atoms = [
+      A('nIm', [x,y], {label:'N', element:'N', shorthand:'ImH', name:'basic imidazole nitrogen'}),
+      A('imC2', P(x+40,y,108,40), {name:'imidazole carbon'}),
+      A('imNH', P(x+40,y,36,40), {label:'NH', element:'N', name:'imidazole NH'}),
+      A('imC4', P(x+40,y,-36,40), {name:'imidazole carbon'}),
+      A('imC5', P(x+40,y,-108,40), {name:'imidazole carbon'})
+    ];
+    const bonds = atoms.map((a,i) => [a.id, atoms[(i+1)%5].id, i === 0 || i === 3 ? 2 : 1]);
+    return {atoms, bonds};
+  }
+  // The ipso carbon is the rightmost vertex, facing the reagent's reactive group.
+  function substitutedPhenyl(ipso, position, substituent) {
+    const radius = 44;
+    const cx = ipso.x - radius;
+    const atoms = [ipso];
+    for (let i = 1; i < 6; i++) {
+      atoms.push(A(`${ipso.id}-${i}`, P(cx, ipso.y, -60*i, radius), {name: 'aryl carbon'}));
+    }
+    const bonds = atoms.map((a,i) => [a.id, atoms[(i+1)%6].id, i%2 === 0 ? 2 : 1]);
+    const branch = sprout(atoms[position], -60*position, substituent, 48);
+    return {atoms:[...atoms, branch], bonds:[...bonds, [atoms[position].id, branch.id, 1]]};
   }
   function water(x, y, open = 170) {
     const o = A('oW', [x, y], {label: 'O', element: 'O', name: 'water oxygen', pad: 16});
@@ -113,7 +137,7 @@ function buildMechanisms() {
   function grin(x, y) {
     const cA = A('cAlpha', [x, y], {name: 'carbon bonded to magnesium'});
     const cB = A('cBeta', P(x, y, 250.5, 72), {label: 'H₃C', name: 'methyl of the Grignard', pad: 22});
-    const mg = A('mg', P(x, y, 0, 76), {label: 'Mg', element: 'Mg', name: 'magnesium', pad: 18});
+    const mg = A('mg', P(x, y, 0, 76), {shorthand: 'EtMgBr', label: 'Mg', element: 'Mg', name: 'magnesium', pad: 18});
     const br = A('br', P(mg.x, mg.y, 0, 74), {label: 'Br', element: 'Br', name: 'bromine', pad: 16});
     return {atoms: [cB, cA, mg, br], bonds: [['cAlpha', 'cBeta', 1], ['cAlpha', 'mg', 1], ['mg', 'br', 1]]};
   }
@@ -243,7 +267,7 @@ function buildMechanisms() {
   }
 
   {
-    const hg = A('hg', [560, 190], {label: 'Hg', element: 'Hg', name: 'mercury', pad: 18});
+    const hg = A('hg', [560, 190], {shorthand: 'Hg(OAc)₂', label: 'Hg', element: 'Hg', name: 'mercury', pad: 18});
     const oAc = A('oAc', P(560, 190, 20, 70), {label: 'OAc', element: 'O', name: 'the acetate that leaves', pad: 22});
     const reactants = join(propene(110, 240), {atoms: [hg, oAc, sprout(hg, 200, {id: 'oAc2', label: 'AcO', element: 'O', name: 'second acetate'}, 70)], bonds: [['hg', 'oAc', 1], ['hg', 'oAc2', 1]]});
     const base = chain3(160, 230);
@@ -291,7 +315,7 @@ function buildMechanisms() {
   {
     const reactants = join(propene(120, 240), borane(580, 200));
     const added = chain3(160, 240);
-    const b = sprout(added[2], -20, {id: 'bN', label: 'B', element: 'B', name: 'boron', pad: 16}, 68);
+    const b = sprout(added[2], -20, {id: 'bN', label: 'BH₂', element: 'B', name: 'boron', pad: 16}, 68);
     const hOn = sprout(added[1], 100, {id: 'hAdd', label: 'H', element: 'H', name: 'the hydrogen from borane', pad: 14}, 58);
     const oPer = A('oPer', [560, 170], {label: 'O⁻', element: 'O', name: 'the nucleophilic peroxide oxygen', pad: 18});
     const oFar = A('oFar', P(560, 170, 15, 64), {label: 'O', element: 'O', name: 'the far peroxide oxygen', pad: 16});
@@ -300,14 +324,14 @@ function buildMechanisms() {
       {atoms: [...added, b, hOn, oPer, oFar, hPer], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'bN', 1], ['c2', 'hAdd', 1], ['oPer', 'oFar', 1], ['oFar', 'hPer', 1]]}
     );
     const attached = chain3(150, 250);
-    const b2 = sprout(attached[2], 10, {id: 'bN', label: 'B', element: 'B', name: 'boron', pad: 16}, 64);
+    const b2 = sprout(attached[2], 10, {id: 'bN', label: 'BH₂⁻', element: 'B', name: 'boron', pad: 16}, 64);
     const o1 = sprout(b2, 80, {id: 'oPer', label: 'O', element: 'O', name: 'the peroxide oxygen on boron', pad: 16}, 60);
-    const o2 = sprout(o1, 20, {id: 'oFar', label: 'O', element: 'O', name: 'the far peroxide oxygen', pad: 16}, 60);
+    const o2 = sprout(o1, 20, {id: 'oFar', label: 'OH', element: 'O', name: 'the far peroxide oxygen', pad: 16}, 60);
     const h2 = sprout(attached[1], 110, {id: 'hAdd', label: 'H', element: 'H', name: 'the hydrogen from borane', pad: 14}, 56);
     const migrate = {atoms: [...attached, b2, o1, o2, h2], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'bN', 1], ['bN', 'oPer', 1], ['oPer', 'oFar', 1], ['c2', 'hAdd', 1]]};
     const ester = chain3(160, 240);
     const oAlk = sprout(ester[2], 20, {id: 'oAlk', label: 'O', element: 'O', name: 'the oxygen now on carbon', pad: 16}, 64);
-    const b3 = sprout(oAlk, 20, {id: 'bN', label: 'B', element: 'B', name: 'boron', pad: 16}, 62);
+    const b3 = sprout(oAlk, 20, {id: 'bN', label: 'BH₂', element: 'B', name: 'boron', pad: 16}, 62);
     const ho = A('oHO', [560, 200], {label: 'OH⁻', element: 'O', name: 'hydroxide oxygen', pad: 18});
     const cleavage = join(
       {atoms: [...ester, oAlk, b3, ho], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oAlk', 1], ['oAlk', 'bN', 1]]}
@@ -431,13 +455,14 @@ function buildMechanisms() {
   }
 
   function peracid(x, y) {
-    const c = A('cP', [x, y], {name: 'peracid carbonyl carbon'});
+    const c = A('cP', [x, y], {shorthand: 'mCPBA', name: 'peracid carbonyl carbon'});
     const oC = sprout(c, 90, {id: 'oC', label: 'O', element: 'O', name: 'peracid carbonyl oxygen', pad: 16}, 62);
     const oL = sprout(c, 330, {id: 'oL', label: 'O', element: 'O', name: 'the inner peroxide oxygen', pad: 16}, 60);
     const oE = sprout(oL, 10, {id: 'oEp', label: 'O', element: 'O', name: 'the electrophilic peroxide oxygen', pad: 16}, 58);
     const h = sprout(oE, -45, {id: 'hP', label: 'H', element: 'H', name: 'the peroxide hydrogen', pad: 14}, 52);
-    const r = sprout(c, 180, {id: 'rP', label: 'R', name: 'the peracid group', pad: 16}, 64);
-    return {atoms: [r, c, oC, oL, oE, h], bonds: [['rP', 'cP', 1], ['cP', 'oC', 2], ['cP', 'oL', 1], ['oL', 'oEp', 1], ['oEp', 'hP', 1]]};
+    const r = sprout(c, 180, {id: 'rP', name: 'aryl carbon attached to the carbonyl'}, 64);
+    const aryl = substitutedPhenyl(r, 2, {id:'clAr', label:'Cl', element:'Cl', name:'meta chlorine'});
+    return join(aryl, {atoms: [c, oC, oL, oE, h], bonds: [['rP', 'cP', 1], ['cP', 'oC', 2], ['cP', 'oL', 1], ['oL', 'oEp', 1], ['oEp', 'hP', 1]]});
   }
   function alkeneChain(x, y) {
     const atoms = zz([
@@ -474,7 +499,7 @@ function buildMechanisms() {
 
   {
     const alk = alkeneChain(70, 250);
-    const os = A('os', [520, 190], {label: 'Os', element: 'Os', name: 'osmium', pad: 18});
+    const os = A('os', [520, 190], {shorthand: 'OsO₄', label: 'Os', element: 'Os', name: 'osmium', pad: 18});
     const o1 = sprout(os, 145, {id: 'o1', label: 'O', element: 'O', name: 'one oxygen that adds', pad: 16}, 64);
     const o2 = sprout(os, 215, {id: 'o2', label: 'O', element: 'O', name: 'the other oxygen that adds', pad: 16}, 64);
     const o3 = sprout(os, 35, {id: 'o3', label: 'O', element: 'O', name: 'an oxo ligand', pad: 16}, 58);
@@ -610,15 +635,15 @@ function buildMechanisms() {
     const mM = A('oM', [(mol.c1.x + mol.c2.x) / 2, mol.c1.y - 110], {label: 'O', element: 'O', name: 'the middle oxygen of the molozonide', pad: 16});
     const mR = A('oR', [mol.c2.x + 10, mol.c2.y - 70], {label: 'O', element: 'O', name: 'an oxygen of the molozonide', pad: 16});
     const moloz = {atoms: [...mol.atoms, mL, mM, mR], bonds: [['cR', 'c1', 1], ['c1', 'c2', 1], ['c2', 'cM', 1], ['c1', 'oL', 1], ['oL', 'oM', 1], ['oM', 'oR', 1], ['oR', 'c2', 1]]};
-    const s = A('sD', [520, 200], {label: 'S', element: 'S', name: 'sulfur of dimethyl sulfide', pad: 16});
+    const s = A('sD', [520, 200], {shorthand: 'Me₂S', label: 'S', element: 'S', name: 'sulfur of dimethyl sulfide', pad: 16});
     const me1 = sprout(s, 60, {id: 'meS1', label: 'H₃C', name: 'a methyl on sulfur', pad: 22}, 68);
     const me2 = sprout(s, -60, {id: 'meS2', label: 'H₃C', name: 'a methyl on sulfur', pad: 22}, 68);
     const ald1c = A('k1', [120, 200], {name: 'one carbonyl carbon'});
     const ald1o = sprout(ald1c, 90, {id: 'ok1', label: 'O', element: 'O', name: 'that carbonyl oxygen', pad: 16}, 64);
     const ald1r = sprout(ald1c, 210, {id: 'rk1', label: 'R', name: 'the substituent', pad: 16}, 66);
     const oxC = A('k2', [280, 230], {name: 'carbonyl oxide carbon'});
-    const oxO = sprout(oxC, 80, {id: 'oIn', label: 'O', element: 'O', name: 'the inner oxygen of the carbonyl oxide', pad: 16}, 60);
-    const oxT = sprout(oxO, 10, {id: 'oOut', label: 'O', element: 'O', name: 'the terminal oxygen of the carbonyl oxide', pad: 16}, 58);
+    const oxO = sprout(oxC, 80, {id: 'oIn', label: 'O⁺', element: 'O', name: 'the inner oxygen of the carbonyl oxide', pad: 16}, 60);
+    const oxT = sprout(oxO, 10, {id: 'oOut', label: 'O⁻', element: 'O', name: 'the terminal oxygen of the carbonyl oxide', pad: 16}, 58);
     const oxR = sprout(oxC, 200, {id: 'rk2', label: 'H₃C', name: 'the methyl on the carbonyl oxide', pad: 22}, 66);
     const reduce = join(
       {atoms: [ald1c, ald1o, ald1r, oxC, oxO, oxT, oxR, s, me1, me2], bonds: [['k1', 'ok1', 2], ['rk1', 'k1', 1], ['k2', 'oIn', 2], ['oIn', 'oOut', 1], ['rk2', 'k2', 1], ['sD', 'meS1', 1], ['sD', 'meS2', 1]]}
@@ -653,7 +678,7 @@ function buildMechanisms() {
 
   {
     const yne = terminalYne(140, 220);
-    const n = A('nA', [480, 200], {label: 'N⁻', element: 'N', name: 'nitrogen of sodium amide', pad: 18});
+    const n = A('nA', [480, 200], {shorthand: 'NaNH₂', label: 'N⁻', element: 'N', name: 'nitrogen of sodium amide', pad: 18});
     const h1 = sprout(n, 50, {id: 'hN1', label: 'H', element: 'H', name: 'a hydrogen on nitrogen', pad: 14}, 58);
     const h2 = sprout(n, -50, {id: 'hN2', label: 'H', element: 'H', name: 'a hydrogen on nitrogen', pad: 14}, 58);
     const reactants = join(yne, {atoms: [n, h1, h2], bonds: [['nA', 'hN1', 1], ['nA', 'hN2', 1]], annotations: [companion('Na⁺')]});
@@ -697,20 +722,20 @@ function buildMechanisms() {
   function organoMg(x, y, ids) {
     const cA = A(ids.c, [x, y], {name: 'carbon bonded to magnesium'});
     const cB = A(ids.me, P(x, y, 250.5, 72), {label: 'H₃C', name: 'methyl of the Grignard', pad: 22});
-    const mg = A(ids.mg, P(x, y, 0, 76), {label: 'Mg', element: 'Mg', name: 'magnesium', pad: 18});
+    const mg = A(ids.mg, P(x, y, 0, 76), {shorthand: 'EtMgBr', label: 'Mg', element: 'Mg', name: 'magnesium', pad: 18});
     const br = A(ids.br, P(mg.x, mg.y, 0, 74), {label: 'Br', element: 'Br', name: 'bromine', pad: 16});
     return {atoms: [cB, cA, mg, br], bonds: [[ids.c, ids.me, 1], [ids.c, ids.mg, 1], [ids.mg, ids.br, 1]], c: cA};
   }
   function rli(x, y, ids) {
     const cA = A(ids.c, [x, y], {name: 'carbon of the organolithium'});
     const cB = A(ids.me, P(x, y, 250.5, 72), {label: 'H₃C', name: 'methyl of the ethyl group', pad: 22});
-    const li = A(ids.li, P(x, y, 0, 70), {label: 'Li', element: 'Li', name: 'lithium', pad: 16});
+    const li = A(ids.li, P(x, y, 0, 70), {shorthand: 'EtLi', label: 'Li', element: 'Li', name: 'lithium', pad: 16});
     return {atoms: [cB, cA, li], bonds: [[ids.c, ids.me, 1], [ids.c, ids.li, 1]], c: cA};
   }
   function hydride(x, y) {
     const h = A('hH', [x, y], {label: 'H', element: 'H', name: 'the hydride', pad: 14});
-    const m = A('mH', P(x, y, 0, 70), {label: 'AlH₃⁻', element: 'Al', name: 'aluminum', pad: 16});
-    return {atoms: [h, m], bonds: [['hH', 'mH', 1]]};
+    const m = A('mH', P(x, y, 0, 70), {shorthand: 'LAH', label: 'AlH₃⁻', element: 'Al', name: 'aluminum', pad: 16});
+    return {atoms: [h, m], bonds: [['hH', 'mH', 1]], annotations: [companion('Li⁺')]};
   }
   function acetone(x, y) {
     const c = A('cCO', [x, y], {name: 'carbonyl carbon'});
@@ -854,15 +879,15 @@ function buildMechanisms() {
 
   {
     const alcohol = roh(80, 250);
-    const s = A('sT', [430, 170], {label: 'S', element: 'S', name: 'sulfur of tosyl chloride', pad: 16});
+    const s = A('sT', [430, 170], {shorthand: 'TsCl', label: 'S', element: 'S', name: 'sulfur of tosyl chloride', pad: 16});
     const o1 = sprout(s, 90, {id: 'oS1', label: 'O', element: 'O', name: 'a sulfonyl oxygen', pad: 16}, 56);
     const o2 = sprout(s, 20, {id: 'oS2', label: 'O', element: 'O', name: 'a sulfonyl oxygen', pad: 16}, 56);
     const cl = sprout(s, -50, {id: 'clT', label: 'Cl', element: 'Cl', name: 'the chlorine that leaves', pad: 16}, 60);
-    const ts = sprout(s, 180, {id: 'cTs', label: 'Tol', name: 'the tolyl group', pad: 16}, 62);
+    const ts = sprout(s, 180, {id: 'cTs', name: 'aryl carbon attached to sulfur'}, 62);
     const base = pyridine('nPy', 660, 250);
-    const reactants = join(alcohol, {atoms: [s, o1, o2, cl, ts], bonds: [['sT', 'oS1', 2], ['sT', 'oS2', 2], ['sT', 'clT', 1], ['sT', 'cTs', 1]]}, base);
+    const reactants = join(alcohol, substitutedPhenyl(ts, 3, {id:'tolMe', name:'para methyl carbon'}), {atoms: [s, o1, o2, cl], bonds: [['sT', 'oS1', 2], ['sT', 'oS2', 2], ['sT', 'clT', 1], ['sT', 'cTs', 1]]}, base);
     const attached = roh(90, 270);
-    const s2 = sprout(attached.o, -10, {id: 'sT', label: 'S', element: 'S', name: 'sulfur', pad: 16}, 66);
+    const s2 = sprout(attached.o, -10, {id: 'sT', label: 'Ts', element: 'S', name: 'tosyl sulfur', pad: 16}, 66);
     const chloride = A('clT', [760, 150], {label: 'Cl⁻', element: 'Cl', name: 'chloride'});
     const mid = join({atoms: [...attached.atoms, s2, chloride], bonds: [...attached.bonds, ['oH', 'sT', 1]], annotations: [charge(attached.o, '⁺')]}, base);
     mechanisms.push(mech(20,
@@ -883,7 +908,7 @@ function buildMechanisms() {
 
   {
     const alcohol = roh(90, 250);
-    const s = A('sC', [470, 170], {label: 'S', element: 'S', name: 'sulfur of thionyl chloride', pad: 16});
+    const s = A('sC', [470, 170], {shorthand: 'SOCl₂', label: 'S', element: 'S', name: 'sulfur of thionyl chloride', pad: 16});
     const oS = sprout(s, 90, {id: 'oS', label: 'O', element: 'O', name: 'the oxygen on sulfur', pad: 16}, 56);
     const cl1 = sprout(s, 15, {id: 'cl1', label: 'Cl', element: 'Cl', name: 'a chlorine on sulfur', pad: 16}, 60);
     const cl2 = sprout(s, -60, {id: 'cl2', label: 'Cl', element: 'Cl', name: 'the chlorine that leaves', pad: 16}, 60);
@@ -893,8 +918,8 @@ function buildMechanisms() {
       {id: 'c2', name: 'the middle carbon'},
       {id: 'c3', name: 'the carbon that will hold chlorine'}
     ], 130, 250, 28);
-    const o = sprout(chain[2], 20, {id: 'oH', label: 'O', element: 'O', name: 'oxygen still on carbon', pad: 16}, 62);
-    const s2 = sprout(o, 20, {id: 'sC', label: 'S', element: 'S', name: 'sulfur', pad: 16}, 58);
+    const o = sprout(chain[2], 20, {id: 'oH', label: 'OH⁺', element: 'O', name: 'protonated oxygen on carbon', pad: 16}, 62);
+    const s2 = sprout(o, 20, {id: 'sC', label: 'S(O)Cl', element: 'S', name: 'chlorosulfite sulfur', pad: 16}, 58);
     const subst = {atoms: [...chain, o, s2, A('cl2', [580, 230], {label: 'Cl⁻', element: 'Cl', name: 'chloride', pad: 18})], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oH', 1], ['oH', 'sC', 1]]};
     mechanisms.push(mech(21,
       'The alcohol attacks sulfur of thionyl chloride. Chloride then substitutes at carbon and the configuration inverts.',
@@ -914,7 +939,7 @@ function buildMechanisms() {
 
   {
     const alcohol = roh(90, 250);
-    const p = A('pB', [480, 170], {label: 'P', element: 'P', name: 'phosphorus', pad: 16});
+    const p = A('pB', [480, 170], {shorthand: 'PBr₃', label: 'P', element: 'P', name: 'phosphorus', pad: 16});
     const b1 = sprout(p, 70, {id: 'br1', label: 'Br', element: 'Br', name: 'a bromine on phosphorus', pad: 16}, 60);
     const b2 = sprout(p, 10, {id: 'br2', label: 'Br', element: 'Br', name: 'a bromine on phosphorus', pad: 16}, 60);
     const b3 = sprout(p, -55, {id: 'br3', label: 'Br', element: 'Br', name: 'the bromine that leaves', pad: 16}, 60);
@@ -924,8 +949,8 @@ function buildMechanisms() {
       {id: 'c2', name: 'the middle carbon'},
       {id: 'c3', name: 'the carbon that will hold bromine'}
     ], 130, 250, 28);
-    const o = sprout(chain[2], 18, {id: 'oH', label: 'O', element: 'O', name: 'oxygen still on carbon', pad: 16}, 62);
-    const p2 = sprout(o, 12, {id: 'pB', label: 'P', element: 'P', name: 'phosphorus', pad: 16}, 58);
+    const o = sprout(chain[2], 18, {id: 'oH', label: 'OH⁺', element: 'O', name: 'protonated oxygen on carbon', pad: 16}, 62);
+    const p2 = sprout(o, 12, {id: 'pB', label: 'PBr₂', element: 'P', name: 'phosphorus', pad: 16}, 58);
     const subst = {atoms: [...chain, o, p2, A('br3', [580, 230], {label: 'Br⁻', element: 'Br', name: 'bromide', pad: 20})], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oH', 1], ['oH', 'pB', 1]]};
     mechanisms.push(mech(22,
       'The alcohol attacks phosphorus of PBr3. Bromide then substitutes at carbon and the configuration inverts.',
@@ -994,16 +1019,16 @@ function buildMechanisms() {
       ]));
   }  {
     const alcohol = roh(80, 250);
-    const si = A('si', [430, 180], {label: 'Si', element: 'Si', name: 'silicon', pad: 16});
+    const si = A('si', [430, 180], {shorthand: 'TBSCl', label: 'Si', element: 'Si', name: 'silicon', pad: 16});
     const cl = sprout(si, -20, {id: 'clS', label: 'Cl', element: 'Cl', name: 'the chlorine that leaves', pad: 16}, 60);
     const me1 = sprout(si, 50, {id: 'me1', label: 'H₃C', name: 'a methyl on silicon', pad: 22}, 60);
     const me2 = sprout(si, 110, {id: 'me2', label: 'H₃C', name: 'a methyl on silicon', pad: 22}, 60);
     const tbu = sprout(si, 180, {id: 'tbu', label: 'tBu', name: 'the tert-butyl group', pad: 20}, 64);
-    const n = A('nIm', [660, 250], {label: 'Im', element: 'N', name: 'imidazole nitrogen', pad: 16});
-    const reactants = join(alcohol, {atoms: [si, cl, me1, me2, tbu, n], bonds: [['si', 'clS', 1], ['si', 'me1', 1], ['si', 'me2', 1], ['si', 'tbu', 1]]});
+    const base = imidazole(660, 250);
+    const reactants = join(alcohol, {atoms: [si, cl, me1, me2, tbu], bonds: [['si', 'clS', 1], ['si', 'me1', 1], ['si', 'me2', 1], ['si', 'tbu', 1]]}, base);
     const attached = roh(90, 270);
-    const si2 = sprout(attached.o, 40, {id: 'si', label: 'Si', element: 'Si', name: 'silicon', pad: 16}, 60);
-    const mid = {atoms: [...attached.atoms, si2, A('nIm', [640, 230], {label: 'Im', element: 'N', name: 'imidazole nitrogen', pad: 16})], bonds: [...attached.bonds, ['oH', 'si', 1]]};
+    const si2 = sprout(attached.o, 40, {id: 'si', label: 'TBS', element: 'Si', name: 'silyl silicon', pad: 16}, 60);
+    const mid = join({atoms: [...attached.atoms, si2], bonds: [...attached.bonds, ['oH', 'si', 1]], annotations: [charge(attached.o, '⁺'), companion('Cl⁻')]}, base);
     mechanisms.push(mech(28,
       'TBSCl protects the alcohol. Oxygen attacks silicon, chloride leaves, and imidazole takes the proton. The sheet also lists NH4F, which removes the group when fluoride attacks silicon.',
       'The product is the TBS ether.',
@@ -1038,7 +1063,7 @@ function buildMechanisms() {
 
   {
     const alcohol = roh(80, 230);
-    const hH = A('hH', [500, 180], {label: 'H⁻', element: 'H', name: 'hydride from sodium hydride', pad: 18});
+    const hH = A('hH', [500, 180], {shorthand: 'NaH', label: 'H⁻', element: 'H', name: 'hydride from sodium hydride', pad: 18});
     const reactants = join(alcohol, {atoms: [hH], bonds: [], annotations: [companion('Na⁺')]});
     const chain = zz([
       {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22},
@@ -1115,7 +1140,7 @@ function buildMechanisms() {
 
   {
     const epi = epoxide(160, 230);
-    const b = A('bL', [520, 170], {label: 'B', element: 'B', name: 'boron of the Lewis acid', pad: 16});
+    const b = A('bL', [520, 170], {shorthand: 'BF₃', label: 'B', element: 'B', name: 'boron of the Lewis acid', pad: 16});
     const f1 = sprout(b, 40, {id: 'f1', label: 'F', element: 'F', name: 'a fluorine', pad: 16}, 56);
     const f2 = sprout(b, -30, {id: 'f2', label: 'F', element: 'F', name: 'a fluorine', pad: 16}, 56);
     const f3 = sprout(b, 110, {id: 'f3', label: 'F', element: 'F', name: 'a fluorine', pad: 16}, 56);
@@ -1284,8 +1309,8 @@ function buildMechanisms() {
     const meR = sprout(c, 330, {id: 'meR', label: 'R', name: 'the other substituent', pad: 16});
     const o = sprout(c, 90, {id: 'oCO', label: 'O', element: 'O', name: 'carbonyl oxygen', pad: 16}, 70);
     const bh = A('hH', [560, 160], {label: 'H', element: 'H', name: 'the hydride', pad: 14});
-    const bb = A('mH', P(560, 160, 0, 70), {label: 'BH₃⁻', element: 'B', name: 'boron of borohydride', pad: 16});
-    const reactants = join({atoms: [meL, c, meR, o, bh, bb], bonds: [['meL', 'cCO', 1], ['cCO', 'meR', 1], ['cCO', 'oCO', 2], ['hH', 'mH', 1]]});
+    const bb = A('mH', P(560, 160, 0, 70), {shorthand: 'NaBH₄', label: 'BH₃⁻', element: 'B', name: 'boron of borohydride', pad: 16});
+    const reactants = join({atoms: [meL, c, meR, o, bh, bb], bonds: [['meL', 'cCO', 1], ['cCO', 'meR', 1], ['cCO', 'oCO', 2], ['hH', 'mH', 1]], annotations: [companion('Na⁺')]});
     const alk = capAt(210, 250, {
       name: 'the carbon that was the carbonyl carbon',
       left: {id: 'meL', label: 'H₃C', name: 'a methyl', pad: 22},

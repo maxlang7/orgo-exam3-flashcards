@@ -35,3 +35,5 @@
 .mech-arrow.is-draft{stroke:#475569}
 .mech-plus{font-family:"DM Sans",system-ui,sans-serif;font-size:26px;fill:#65776c;pointer-events:none}
 .mech-salt{font-family:"DM Sans",system-ui,sans-serif;font-size:16px;font-weight:600;fill:#65776c;pointer-events:none}
+
+.mech-caption{font:600 15px "DM Sans",system-ui,sans-serif;fill:#405f54;pointer-events:none}
