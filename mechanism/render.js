@@ -4,10 +4,8 @@ function mechanismInner(scene, state) {
     [atom.id, `${atom.label || atom.element || 'C'} (atom ${index + 1})`]));
   function drawBond([from, to, kind]) {
     if (kind === 'wedge') return `<polygon class="wedge" points="${wedgePoints(scene, from, to)}"/>`;
-    const dash = kind === 'dash' ? ' dash' : '';
-    const order = kind === 'dash' ? 1 : kind;
-    return bondSegment(scene, from, to, order).map(([x1, y1, x2, y2]) =>
-      `<line class="bond${dash}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`).join('');
+    return bondSegment(scene, from, to, kind).map(([x1, y1, x2, y2]) =>
+      `<line class="bond" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`).join('');
   }
   function drawHit([from, to, order]) {
     const {a, b, len, ux, uy} = bondEnds(scene, from, to);

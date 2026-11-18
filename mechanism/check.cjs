@@ -73,6 +73,17 @@ for (const mechanism of catalog) {
   }
   assert(attempt.view().finished);
 }
+for (const [cardId, intermediate] of [[32,'opened'], [33,'alkoxide'], [34,'alkoxide']]) {
+  const mechanism = context.mechanismFor(cardId);
+  for (const scene of [mechanism.scenes[intermediate], mechanism.scenes.product]) {
+    const [left,center,right] = ['me','cM','cL'].map(id => context.atomById(scene,id));
+    const cosine = ((left.x-center.x)*(right.x-center.x) + (left.y-center.y)*(right.y-center.y)) /
+      (context.distance(left,center)*context.distance(right,center));
+    assert(Math.abs(cosine + 0.5) < 0.01, 'Opened epoxide needs a 120-degree backbone');
+    assert(!scene.bonds.some(([a,b,kind]) => [a,b].includes('cL') && ['dash','wedge'].includes(kind)),
+      'Terminal methylene is not stereogenic');
+  }
+}
 const osmium = context.mechanismFor(8);
 for (const [key,orders] of [['reactants','2222'],['osmate','1122']]) {
   const scene = osmium.scenes[key];

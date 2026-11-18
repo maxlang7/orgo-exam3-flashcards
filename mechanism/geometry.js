@@ -47,6 +47,15 @@ function bondSegment(scene, fromId, toId, order) {
   const y1 = a.y + uy * bondGap(a, ux, uy);
   const x2 = b.x - ux * bondGap(b, ux, uy);
   const y2 = b.y - uy * bondGap(b, ux, uy);
+  if (order === 'dash') {
+    const count = Math.max(3, Math.round(Math.hypot(x2-x1, y2-y1)/7));
+    return Array.from({length:count}, (_,i) => {
+      const t = (i+0.5)/count;
+      const half = 0.6 + 4.9*t;
+      const x = x1 + (x2-x1)*t, y = y1 + (y2-y1)*t;
+      return [x-uy*half, y+ux*half, x+uy*half, y-ux*half];
+    });
+  }
   if (order !== 2 && order !== 3) return [[x1, y1, x2, y2]];
   const ox = -uy * 3.6;
   const oy = ux * 3.6;
@@ -77,7 +86,9 @@ function arrowAnchor(scene, id, toward) {
   if (isBondId(id)) {
     const [a, b] = bondAtoms(id);
     const bond = scene.bonds.find(([u,v]) => bondId(u,v) === id);
-    const midpoints = bondSegment(scene, bond[0], bond[1], bond[2]).map(([x,y,u,v]) =>
+    // A hashed wedge is one bond; its hatch marks are not separate electron sources.
+    const order = bond[2] === 'dash' ? 1 : bond[2];
+    const midpoints = bondSegment(scene, bond[0], bond[1], order).map(([x,y,u,v]) =>
       ({x:(x+u)/2, y:(y+v)/2}));
     if (!toward) return centerBetween(atomById(scene,a), atomById(scene,b));
     return midpoints.reduce((best, p) => distance(p,toward) < distance(best,toward) ? p : best);

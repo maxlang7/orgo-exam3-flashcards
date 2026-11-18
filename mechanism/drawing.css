@@ -1,5 +1,4 @@
 .bond{stroke:#24302b;stroke-width:2.15;stroke-linecap:round;pointer-events:none}
-.bond.dash{stroke-dasharray:5 4}
 .wedge{fill:#24302b;stroke:#24302b;stroke-width:.6;stroke-linejoin:round;pointer-events:none}
 .bond-hit-line{stroke:transparent;stroke-width:16;stroke-linecap:round;cursor:pointer}
 .bond-select{stroke:transparent;stroke-width:7;stroke-linecap:round;pointer-events:none}

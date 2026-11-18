@@ -201,6 +201,29 @@ function buildMechanisms() {
     const br = A('brX', P(x, y, 0, 70), {label: 'Br', element: 'Br', name: 'bromine of HBr', pad: 16});
     return {atoms: [h, br], bonds: [['hX', 'brX', 1]]};
   }
+  function openedEpoxide(middleOxygen, terminalOxygen, stereo) {
+    const side = stereo === 'wedge' ? 1 : -1;
+    const middle = A('cM', [200, 240], {name:'the more substituted carbon'});
+    const methyl = sprout(middle, 180 + side*30, {id:'me', name:'methyl carbon'});
+    const end = sprout(middle, -side*30, {id:'cL', name:'the less substituted carbon'});
+    const oM = sprout(middle, side*90, middleOxygen, 66);
+    const oL = sprout(end, side*30, terminalOxygen, 66);
+    const atoms = [methyl, middle, end, oM, oL];
+    const bonds = [['me','cM',1], ['cM','cL',1], ['cM',oM.id,stereo], ['cL',oL.id,1]];
+    // The methoxy group has a second carbon, distinct from the substrate methyl.
+    for (const oxygen of [oM,oL]) {
+      if (oxygen.id !== 'oNu') continue;
+      const methyl = sprout(oxygen, oxygen === oM ? side*30 : -side*30, {id:'nuMe', name:'methoxy methyl carbon'}, 58);
+      atoms.push(methyl);
+      bonds.push([oxygen.id, methyl.id, 1]);
+    }
+    return {atoms, bonds};
+  }
+  function methoxide(x, y) {
+    const oxygen = A('oNu', [x,y], {label:'O⁻', element:'O', name:'methoxide oxygen'});
+    const methyl = sprout(oxygen, 30, {id:'nuMe', name:'methoxy methyl carbon'}, 58);
+    return {atoms:[oxygen,methyl], bonds:[['oNu','nuMe',1]]};
+  }
   function epoxide(x, y) {
     const o = A('oE', [x, y], {label: 'O', element: 'O', name: 'epoxide oxygen', pad: 16});
     const cM = A('cM', P(x, y, 240, 66), {name: 'more substituted epoxide carbon'});
@@ -551,7 +574,7 @@ function buildMechanisms() {
     const chain = chain3(180, 250);
     const ohM = sprout(chain[1], 110, {id: 'oH', label: 'OH', element: 'O', name: 'hydroxyl on the middle carbon', pad: 18}, 66);
     const ohE = sprout(chain[2], -20, {id: 'oE2', label: 'OH', element: 'O', name: 'hydroxyl on the end carbon', pad: 18}, 66);
-    const product = {atoms: [...chain, ohM, ohE], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c2', 'oH', 'dash'], ['c3', 'oE2', 'wedge']]};
+    const product = {atoms: [...chain, ohM, ohE], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c2', 'oH', 'dash'], ['c3', 'oE2', 1]]};
     mechanisms.push(mech(9,
       'mCPBA makes the epoxide, then hydroxide opens it at the less substituted carbon. The diol is anti.',
       'The product is the trans diol.',
@@ -1103,21 +1126,16 @@ function buildMechanisms() {
     const epi = epoxide(170, 240);
     const hOn = sprout(epi.o, 90, {id: 'hOn', label: 'H', element: 'H', name: 'the hydrogen on the epoxide oxygen', pad: 14}, 52);
     const protonated = join({atoms: [...epi.atoms, hOn], bonds: [['oE', 'cM', 1], ['oE', 'cL', 1], ['cM', 'cL', 1], ['cM', 'me', 1], ['oE', 'hOn', 1]], annotations: [charge(epi.o, '⁺')]}, water(580, 250));
-    const cM = A('cM', [200, 240], {name: 'the more substituted carbon'});
-    const cL = sprout(cM, 0, {id: 'cL', name: 'the less substituted carbon'}, 80);
-    const me = sprout(cM, 180, {id: 'me', label: 'H₃C', name: 'methyl carbon', pad: 22}, 72);
-    const oAdd = sprout(cM, 90, {id: 'oAdd', label: 'O', element: 'O', name: 'the oxonium oxygen', pad: 16}, 66);
-    const hP = sprout(oAdd, 40, {id: 'hP', label: 'H', element: 'H', name: 'a hydrogen on the oxonium', pad: 14}, 50);
-    const hQ = sprout(oAdd, 140, {id: 'hQ', label: 'H', element: 'H', name: 'the other hydrogen on the oxonium', pad: 14}, 50);
-    const oE = sprout(cL, -90, {id: 'oE', label: 'OH', element: 'O', name: 'the hydroxyl from the epoxide', pad: 18}, 66);
-    const opened = join({
-      atoms: [me, cM, cL, oAdd, hP, hQ, oE],
-      bonds: [['me', 'cM', 1], ['cM', 'cL', 1], ['cM', 'oAdd', 'wedge'], ['cL', 'oE', 'dash'], ['oAdd', 'hP', 1], ['oAdd', 'hQ', 1]],
-      annotations: [charge(oAdd, '⁺')]
-    }, water(620, 280, 190));
-    const prodM = A('cM', [230, 230], {name: 'the more substituted carbon'});
-    const prodL = sprout(prodM, 0, {id: 'cL', name: 'the less substituted carbon'}, 80);
-    const product = {atoms: [sprout(prodM, 180, {id: 'me', label: 'H₃C', name: 'methyl carbon', pad: 22}, 72), prodM, prodL, sprout(prodM, 90, {id: 'oM', label: 'OH', element: 'O', name: 'the new hydroxyl', pad: 18}, 66), sprout(prodL, -90, {id: 'oL', label: 'OH', element: 'O', name: 'the other hydroxyl', pad: 18}, 66)], bonds: [['me', 'cM', 1], ['cM', 'cL', 1], ['cM', 'oM', 'wedge'], ['cL', 'oL', 'dash']]};
+    const substrate = openedEpoxide(
+      {id:'oAdd', label:'O', element:'O', name:'the oxonium oxygen'},
+      {id:'oE', label:'OH', element:'O', name:'the epoxide-derived hydroxyl'}, 'wedge');
+    const oAdd = substrate.atoms.find(atom => atom.id === 'oAdd');
+    const hP = sprout(oAdd, 35, {id:'hP', label:'H', element:'H', name:'an oxonium hydrogen'}, 50);
+    const hQ = sprout(oAdd, 145, {id:'hQ', label:'H', element:'H', name:'the other oxonium hydrogen'}, 50);
+    const opened = join(substrate, {atoms:[hP,hQ], bonds:[['oAdd','hP',1],['oAdd','hQ',1]], annotations:[charge(oAdd,'⁺')]}, water(620,280,190));
+    const product = openedEpoxide(
+      {id:'oM', label:'OH', element:'O', name:'the new hydroxyl'},
+      {id:'oL', label:'OH', element:'O', name:'the epoxide-derived hydroxyl'}, 'wedge');
     mechanisms.push(mech(32,
       'Acid opens the epoxide. Water attacks the more substituted carbon, from the face opposite the oxygen.',
       'The product is the anti diol.',
@@ -1147,23 +1165,11 @@ function buildMechanisms() {
     const reactants = join(epi, {atoms: [b, f1, f2, f3], bonds: [['bL', 'f1', 1], ['bL', 'f2', 1], ['bL', 'f3', 1]]});
     const epi2 = epoxide(150, 240);
     const b2 = sprout(epi2.o, 80, {id: 'bL', label: 'BF₃⁻', element: 'B', name: 'coordinated boron', pad: 24}, 58);
-    const oNu = A('oNu', [560, 280], {label: 'OMe⁻', element: 'O', name: 'methoxide', pad: 24});
-    const coordinated = {atoms: [...epi2.atoms, b2, oNu], bonds: [['oE', 'cM', 1], ['oE', 'cL', 1], ['cM', 'cL', 1], ['cM', 'me', 1], ['oE', 'bL', 1]], annotations: [charge(epi2.o, '⁺')]};
-    const cM = A('cM', [200, 240], {name: 'the more substituted carbon'});
-    const cL = sprout(cM, 0, {id: 'cL', name: 'the less substituted carbon'}, 80);
-    const alkoxide = join({
-      atoms: [
-        sprout(cM, 180, {id: 'me', label: 'H₃C', name: 'methyl carbon', pad: 22}, 72),
-        cM, cL,
-        sprout(cM, 90, {id: 'oNu', label: 'OMe', element: 'O', name: 'the methoxy group', pad: 22}, 68),
-        sprout(cL, -90, {id: 'oAlk', label: 'O⁻', element: 'O', name: 'the alkoxide oxygen', pad: 18}, 66)
-      ],
-      bonds: [['me', 'cM', 1], ['cM', 'cL', 1], ['cM', 'oNu', 'wedge'], ['cL', 'oAlk', 'dash']],
-      annotations: [companion('BF₃')]
-    }, water(640, 160, 200));
-    const pM = A('cM', [230, 230], {name: 'the more substituted carbon'});
-    const pL = sprout(pM, 0, {id: 'cL', name: 'the less substituted carbon'}, 80);
-    const product = {atoms: [sprout(pM, 180, {id: 'me', label: 'H₃C', name: 'methyl carbon', pad: 22}, 72), pM, pL, sprout(pM, 90, {id: 'oNu', label: 'OMe', element: 'O', name: 'the methoxy group', pad: 22}, 68), sprout(pL, -90, {id: 'oH', label: 'OH', element: 'O', name: 'the hydroxyl', pad: 18}, 66)], bonds: [['me', 'cM', 1], ['cM', 'cL', 1], ['cM', 'oNu', 'wedge'], ['cL', 'oH', 'dash']]};
+    const coordinated = join({atoms: [...epi2.atoms, b2], bonds: [...epi2.bonds, ['oE', 'bL', 1]], annotations: [charge(epi2.o, '⁺')]}, methoxide(560,280));
+    const methoxy = {id:'oNu', label:'O', element:'O', name:'the methoxy oxygen'};
+    const alkoxide = join(openedEpoxide(methoxy, {id:'oAlk', label:'O⁻', element:'O', name:'the alkoxide oxygen'}, 'wedge'),
+      water(640,160,200), {annotations:[companion('BF₃')]});
+    const product = openedEpoxide(methoxy, {id:'oH', label:'OH', element:'O', name:'the hydroxyl'}, 'wedge');
     mechanisms.push(mech(33,
       'A Lewis acid coordinates to the epoxide oxygen. Methoxide then attacks the more substituted carbon. The sheet writes Nu. This drawing uses methoxide, and BF3 for the Lewis acid.',
       'The product has the nucleophile on the more substituted carbon and OH on the less substituted carbon.',
@@ -1180,21 +1186,11 @@ function buildMechanisms() {
   }
 
   {
-    const reactants = join(epoxide(180, 220), {atoms: [A('oNu', [520, 220], {label: 'OMe⁻', element: 'O', name: 'methoxide', pad: 24})], bonds: []});
-    const cL = A('cL', [280, 240], {name: 'the less substituted carbon'});
-    const cM = sprout(cL, 180, {id: 'cM', name: 'the more substituted carbon'}, 80);
-    const alkoxide = join({
-      atoms: [
-        sprout(cM, 180, {id: 'me', label: 'H₃C', name: 'methyl carbon', pad: 22}, 72),
-        cM, cL,
-        sprout(cL, 90, {id: 'oNu', label: 'OMe', element: 'O', name: 'the methoxy group', pad: 22}, 68),
-        sprout(cM, -90, {id: 'oAlk', label: 'O⁻', element: 'O', name: 'the alkoxide oxygen', pad: 18}, 66)
-      ],
-      bonds: [['me', 'cM', 1], ['cM', 'cL', 1], ['cL', 'oNu', 'wedge'], ['cM', 'oAlk', 'dash']]
-    }, water(620, 170, 190));
-    const pL = A('cL', [300, 230], {name: 'the less substituted carbon'});
-    const pM = sprout(pL, 180, {id: 'cM', name: 'the more substituted carbon'}, 80);
-    const product = {atoms: [sprout(pM, 180, {id: 'me', label: 'H₃C', name: 'methyl carbon', pad: 22}, 72), pM, pL, sprout(pL, 90, {id: 'oNu', label: 'OMe', element: 'O', name: 'the methoxy group', pad: 22}, 68), sprout(pM, -90, {id: 'oH', label: 'OH', element: 'O', name: 'the hydroxyl', pad: 18}, 66)], bonds: [['me', 'cM', 1], ['cM', 'cL', 1], ['cL', 'oNu', 'wedge'], ['cM', 'oH', 'dash']]};
+    const reactants = join(epoxide(180, 220), methoxide(520,220));
+    const methoxy = {id:'oNu', label:'O', element:'O', name:'the methoxy oxygen'};
+    const alkoxide = join(openedEpoxide({id:'oAlk', label:'O⁻', element:'O', name:'the alkoxide oxygen'}, methoxy, 'dash'),
+      water(620,170,190));
+    const product = openedEpoxide({id:'oH', label:'OH', element:'O', name:'the hydroxyl'}, methoxy, 'dash');
     mechanisms.push(mech(34,
       'Under basic conditions methoxide attacks the less substituted carbon of the epoxide. The sheet writes Base. This drawing uses methoxide.',
       'The product has the base on the less substituted carbon and OH on the carbon that held the methyl.',
