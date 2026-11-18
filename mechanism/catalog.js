@@ -67,6 +67,18 @@ function buildMechanisms() {
     const list = choices[0] && choices[0].arrows ? choices : [{arrows: choices}];
     return {scene, title, choices: list};
   }
+  // Br2's two bromines are equivalent, and the return arrow can close on either
+  // alkene carbon. The first pair is the one drawn as the bridge in the next picture.
+  function bromoniumFormation(bridge, leaving, carbons) {
+    return [bridge, leaving].flatMap(electrophile => {
+      const departs = electrophile === bridge ? leaving : bridge;
+      return carbons.map(carbon => ({arrows: [
+        leave(electrophile, carbons[0], carbons[1]),
+        leave(departs, bridge, leaving),
+        lone(carbon, electrophile)
+      ]}));
+    });
+  }
   function protonate(oId) {
     return [
       {arrows: [lone('h1', oId), leave('oW', 'h1', 'oW')]},
@@ -429,12 +441,7 @@ function buildMechanisms() {
       'The product is the trans dibromide.',
       {reactants, bromonium, product},
       [
-        step('reactants', 'Bromonium ion formation',
-          ['r1', 'r0'].map(carbon => ({arrows: [
-            leave('brA', 'r0', 'r1'),
-            leave('brB', 'brA', 'brB'),
-            lone(carbon, 'brA')
-          ]}))),
+        step('reactants', 'Bromonium ion formation', bromoniumFormation('brA', 'brB', ['r1', 'r0'])),
         step('bromonium', 'Ring opening', [
           {arrows: [lone('r0', 'brB'), leave('brA', 'r0', 'brA')]},
           {arrows: [lone('r1', 'brB'), leave('brA', 'r1', 'brA')]}
@@ -468,12 +475,7 @@ function buildMechanisms() {
       'The product is the bromohydrin, with OH on the middle carbon and Br on the end.',
       {reactants, bromonium, oxonium, product},
       [
-        step('reactants', 'Bromonium ion formation',
-          ['c3', 'c2'].map(carbon => ({arrows: [
-            leave('brA', 'c2', 'c3'),
-            leave('brB', 'brA', 'brB'),
-            lone(carbon, 'brA')
-          ]}))),
+        step('reactants', 'Bromonium ion formation', bromoniumFormation('brA', 'brB', ['c3', 'c2'])),
         step('bromonium', 'Ring opening', [
           lone('c2', 'oW'),
           leave('brA', 'c2', 'brA')
@@ -810,22 +812,12 @@ function buildMechanisms() {
       'The product is the tetrabromide.',
       {reactants, brom1, dibromo, brom2, product},
       [
-        step('reactants', 'First bromonium ion',
-          ['c2', 'c1'].map(carbon => ({arrows: [
-            leave('brA', 'c1', 'c2'),
-            leave('brB', 'brA', 'brB'),
-            lone(carbon, 'brA')
-          ]}))),
+        step('reactants', 'First bromonium ion', bromoniumFormation('brA', 'brB', ['c2', 'c1'])),
         step('brom1', 'First ring opening', [
           {arrows: [lone('c1', 'brB'), leave('brA', 'c1', 'brA')]},
           {arrows: [lone('c2', 'brB'), leave('brA', 'c2', 'brA')]}
         ]),
-        step('dibromo', 'Second bromonium ion',
-          ['c2', 'c1'].map(carbon => ({arrows: [
-            leave('brC', 'c1', 'c2'),
-            leave('brD', 'brC', 'brD'),
-            lone(carbon, 'brC')
-          ]}))),
+        step('dibromo', 'Second bromonium ion', bromoniumFormation('brC', 'brD', ['c2', 'c1'])),
         step('brom2', 'Second ring opening', [
           {arrows: [lone('c1', 'brD'), leave('brC', 'c1', 'brC')]},
           {arrows: [lone('c2', 'brD'), leave('brC', 'c2', 'brC')]}

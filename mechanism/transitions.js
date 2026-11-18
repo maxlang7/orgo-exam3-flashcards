@@ -156,6 +156,13 @@ const mechanismAtomOverrides = {
   }
 };
 
+function brominePairSwap(arrows, bridge, leaving) {
+  const pair = [bridge, leaving];
+  const fromThisBond = from => isBondId(from) && pair.every(id => bondAtoms(from).includes(id));
+  const electrophile = pair.find(id => arrows.some(arrow => arrow.to === id && !fromThisBond(arrow.from)));
+  return electrophile === leaving ? [[leaving, bridge], [bridge, leaving]] : [];
+}
+
 function mechanismChoiceAtomOverrides(cardId, stepIndex, arrows) {
   // Cyclopentene bromonium is symmetrical. Attack at either carbon is the same
   // trans dibromide. The incoming bromide lands on the carbon that was attacked.
@@ -175,6 +182,11 @@ function mechanismChoiceAtomOverrides(cardId, stepIndex, arrows) {
       (isBondId(arrow.from) && bondAtoms(arrow.from).includes('c2') && arrow.to === 'brC'));
     return attacksRight ? [['brD', 'b4'], ['brC', 'b1'], ['br1', 'b2'], ['br2', 'b3']] : [];
   }
+  // Either bromine of Br2 can be the electrophile. The next picture draws one
+  // of them as the bridge, so the bromine that was attacked has to take that id.
+  if ((cardId === 5 || cardId === 6) && stepIndex === 0) return brominePairSwap(arrows, 'brA', 'brB');
+  if (cardId === 15 && stepIndex === 0) return brominePairSwap(arrows, 'brA', 'brB');
+  if (cardId === 15 && stepIndex === 2) return brominePairSwap(arrows, 'brC', 'brD');
   if (stepIndex !== 0) return [];
   if (cardId === 21) {
     const chloride = arrows.find(arrow => arrow.to === 'cl1' || arrow.to === 'cl2')?.to ?? 'cl2';

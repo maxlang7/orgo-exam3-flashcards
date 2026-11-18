@@ -267,7 +267,7 @@ function acceptChoice(cardId, stepIndex, choiceIndex, expected = []) {
   return plan;
 }
 for (const [cardId, stepIndex, count] of [
-  [5, 0, 2], [6, 0, 2], [15, 0, 2], [15, 2, 2],
+  [5, 0, 4], [6, 0, 4], [15, 0, 4], [15, 2, 4],
   [7, 0, 2], [9, 0, 2], [10, 0, 2], [11, 1, 2],
   [2, 0, 4], [3, 0, 3], [11, 0, 3], [22, 0, 3]
 ]) {
@@ -285,6 +285,12 @@ for (const choice of context.mechanismFor(3).steps[0].choices) {
   assert(choice.arrows.some(arrow => arrow.to === 'c2'));
   assert(!choice.arrows.some(arrow => arrow.to === 'c3'));
 }
+acceptChoice(5, 0, 2, [['brB', 'brA'], ['brA', 'brB']]);
+acceptChoice(5, 0, 3, [['brB', 'brA'], ['brA', 'brB']]);
+const propeneOtherBromine = acceptChoice(6, 0, 3, [['brB', 'brA']]);
+assert.equal(propeneOtherBromine.mapped.get('brA'), undefined);
+acceptChoice(15, 0, 3, [['brB', 'brA'], ['brA', 'brB']]);
+acceptChoice(15, 2, 3, [['brD', 'brC'], ['brC', 'brD']]);
 const br2Leaves = acceptChoice(22, 0, 1, [['br2', 'br3']]);
 assert.equal(br2Leaves.mapped.get('br1'), undefined);
 assert.equal(br2Leaves.mapped.get('br3'), undefined);
