@@ -6,9 +6,8 @@
 //
 // Angles use standard position, 0° east and 90° north, with y growing downward.
 // The carbonyl carbon is trigonal, 120° apart. C–Mg–Br is linear, and the
-// CH2–CH3 bond sits 109.5° off that line. Water is 104.5°. The alkoxide carbon
-// is tetrahedral: three plain bonds 120° apart, and a solid wedge for the bond
-// coming forward.
+// CH2–CH3 bond sits 109.5° off that line. Water is 104.5°. A carbon drawn with
+// four bonds has those bonds 90° apart.
 
 const mechanisms = [
   {
@@ -40,12 +39,12 @@ const mechanisms = [
       },
       alkoxide: {
         atoms: [
-          {id: 'meL', x: 116, y: 241, label: 'H₃C', element: 'C', pad: 22, name: 'left methyl carbon'},
+          {id: 'meL', x: 104, y: 198, label: 'H₃C', element: 'C', pad: 22, name: 'left methyl carbon'},
           {id: 'cC', x: 190, y: 198, element: 'C', pad: 5, name: 'carbon that was the carbonyl carbon'},
-          {id: 'meR', x: 116, y: 155, label: 'H₃C', element: 'C', pad: 30, name: 'methyl carbon coming forward'},
+          {id: 'meR', x: 190, y: 284, label: 'H₃C', element: 'C', pad: 22, name: 'lower methyl carbon'},
           {id: 'oAlk', x: 190, y: 112, label: 'O⁻', element: 'O', pad: 18, name: 'alkoxide oxygen'},
-          {id: 'cAlpha', x: 264, y: 241, element: 'C', pad: 5, name: 'carbon that came from the Grignard'},
-          {id: 'cBeta', x: 248, y: 329, label: 'H₃C', element: 'C', pad: 22, name: 'methyl carbon of that ethyl group'},
+          {id: 'cAlpha', x: 276, y: 198, element: 'C', pad: 5, name: 'carbon that came from the Grignard'},
+          {id: 'cBeta', x: 305, y: 279, label: 'H₃C', element: 'C', pad: 22, name: 'methyl carbon of that ethyl group'},
           {id: 'h1', x: 592, y: 126, label: 'H', element: 'H', pad: 14, name: 'a hydrogen of water'},
           {id: 'oW', x: 640, y: 188, label: 'O', element: 'O', pad: 16, name: 'water oxygen'},
           {id: 'h2', x: 592, y: 250, label: 'H', element: 'H', pad: 14, name: 'the other hydrogen of water'}
@@ -55,7 +54,7 @@ const mechanisms = [
           ['cC', 'oAlk', 1],
           ['cC', 'cAlpha', 1],
           ['cAlpha', 'cBeta', 1],
-          ['cC', 'meR', 'wedge'],
+          ['cC', 'meR', 1],
           ['h1', 'oW', 1],
           ['oW', 'h2', 1]
         ],
@@ -63,19 +62,19 @@ const mechanisms = [
       },
       product: {
         atoms: [
-          {id: 'meL', x: 116, y: 241, label: 'H₃C', element: 'C', pad: 22, name: 'left methyl carbon'},
+          {id: 'meL', x: 104, y: 198, label: 'H₃C', element: 'C', pad: 22, name: 'left methyl carbon'},
           {id: 'cC', x: 190, y: 198, element: 'C', pad: 5, name: 'tertiary carbon'},
-          {id: 'meR', x: 116, y: 155, label: 'H₃C', element: 'C', pad: 30, name: 'methyl carbon coming forward'},
+          {id: 'meR', x: 190, y: 284, label: 'H₃C', element: 'C', pad: 22, name: 'lower methyl carbon'},
           {id: 'oH', x: 190, y: 112, label: 'OH', element: 'O', pad: 20, name: 'alcohol oxygen'},
-          {id: 'cAlpha', x: 264, y: 241, element: 'C', pad: 5, name: 'methylene carbon of the ethyl group'},
-          {id: 'cBeta', x: 248, y: 329, label: 'H₃C', element: 'C', pad: 22, name: 'methyl carbon of the ethyl group'}
+          {id: 'cAlpha', x: 276, y: 198, element: 'C', pad: 5, name: 'methylene carbon of the ethyl group'},
+          {id: 'cBeta', x: 305, y: 279, label: 'H₃C', element: 'C', pad: 22, name: 'methyl carbon of the ethyl group'}
         ],
         bonds: [
           ['meL', 'cC', 1],
           ['cC', 'oH', 1],
           ['cC', 'cAlpha', 1],
           ['cAlpha', 'cBeta', 1],
-          ['cC', 'meR', 'wedge']
+          ['cC', 'meR', 1]
         ],
         texts: [{x: 460, y: 400, text: 'HOMgBr', className: 'mech-salt'}]
       }
