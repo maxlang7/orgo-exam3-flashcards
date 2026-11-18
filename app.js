@@ -92,6 +92,9 @@ function next() {
   updateVisibility();
 }
 function startMechanism() {
+  $('mechanism').classList.remove('zoomed');
+  $('mech-zoom').setAttribute('aria-pressed', 'false');
+  $('mech-zoom').textContent = 'Enlarge drawing';
   attempt = createAttempt(mechanismFor(current.id));
   $('practice-content').hidden = true;
   $('mechanism').hidden = false;
@@ -202,6 +205,11 @@ $('mech-svg').addEventListener('keydown', event => {
   event.stopPropagation();
   onMechanismAtom(target.dataset.id);
 });
+$('mech-zoom').onclick = () => {
+  const enlarged = $('mechanism').classList.toggle('zoomed');
+  $('mech-zoom').setAttribute('aria-pressed', String(enlarged));
+  $('mech-zoom').textContent = enlarged ? 'Fit drawing' : 'Enlarge drawing';
+};
 $('mech-undo').onclick = () => {
   if (!attempt) return;
   attempt.undo();

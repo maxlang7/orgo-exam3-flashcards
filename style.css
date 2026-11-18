@@ -71,3 +71,13 @@
 
 #mechanism .mech-scroll-hint{margin:2px 0 10px}
 @media(min-width:640px){#mechanism .mech-scroll-hint{display:none}}
+
+#mech-zoom,#mechanism .mech-scroll-hint{display:none}
+@media(max-width:720px){
+  .mech-guide{display:grid;grid-template-columns:1fr auto;align-items:center}
+  #mech-flow{grid-column:1/-1}
+  #mech-zoom{display:block;font-size:12px;text-decoration:underline}
+  #mech-svg{min-width:0}
+  #mechanism.zoomed #mech-svg{min-width:720px}
+  #mechanism.zoomed .mech-scroll-hint{display:block}
+}
