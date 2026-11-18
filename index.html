@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reaction practice · Orgo III</title><link rel="stylesheet" href="style.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reaction practice · Orgo III</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="mechanism/drawing.css"></head>
 <body><main>
-<header><div class="eyebrow">09-219 · EXAM III</div><h1>Reaction practice<span>.</span></h1><p>Build confidence, one reaction at a time.</p></header>
-<section class="practice-options" aria-label="Practice options">
+<header><div class="eyebrow">09-219 · EXAM III</div><h1>Reaction practice<span>.</span></h1><p>Practice the reactions from your Exam III sheet.</p></header>
+<div class="workbench"><aside class="settings"><h2>Practice settings</h2><section class="practice-options" aria-label="Practice options">
 <label for="practice-mode">Practice<select id="practice-mode"><option value="mixed">Conditions & products</option><option value="reagents">Conditions only</option><option value="product">Products only</option><option value="mechanism">Mechanisms (in development)</option></select></label>
 
 <label for="practice-order">Card selection<select id="practice-order"><option value="adaptive">Prioritize low confidence</option><option value="random">Equal chance for every card</option></select></label>
@@ -13,6 +13,8 @@
 <div class="picker-actions"><button type="button" id="select-all">Select all</button><button type="button" id="clear-all">Clear all</button></div>
 <div id="reaction-checklist"></div>
 </details>
+<label id="jump-label" hidden>Study a mechanism<select id="jump-card"></select></label>
+</aside><div class="study-column">
 <p id="empty-selection" class="empty-selection" hidden>Select at least one reaction above to start practicing.</p>
 <div class="toolbar"><span id="progress"></span><button class="quiet" id="reset">Reset progress</button></div>
 <section id="study-card" class="study-card" aria-labelledby="question">
@@ -29,7 +31,7 @@
 <div class="diagram-scroll" tabindex="0" aria-label="Mechanism drawing. Scroll horizontally on small screens.">
 <svg id="mech-svg" viewBox="0 0 760 440" role="group" aria-label="Mechanism. Click the bond or atom the electrons leave, then the atom they go to."></svg>
 </div>
-<p class="scroll-hint mech-scroll-hint">Swipe across the drawing to see both ends of the reaction.</p>
+<p id="mech-companions" hidden></p><p class="scroll-hint mech-scroll-hint">Swipe across the drawing to see both ends of the reaction.</p>
 <p id="mech-status" role="status"></p>
 <div class="mech-actions"><button type="button" class="quiet" id="mech-undo">Undo</button><button type="button" class="quiet" id="mech-show">Show this step</button></div>
 <p id="mech-source" class="mech-source"></p>
@@ -39,4 +41,4 @@
 </div><details id="original-notes"><summary>View original reaction & notes</summary><img id="answer" alt="Original reaction sheet entry"></details></div>
 </section>
 <footer><p id="feedback" role="status">Lower confidence brings a reaction back more often.</p><span>Progress saved on this device</span></footer>
-</main><script src="deck.js"></script><script src="mechanisms.js"></script><script src="app.js"></script></body></html>
+</div></div></main><script src="deck.js"></script><script src="mechanism/layout.js"></script><script src="mechanism/geometry.js"></script><script src="mechanism/render.js"></script><script src="mechanism/catalog.js"></script><script src="mechanisms.js"></script><script src="app.js"></script></body></html>

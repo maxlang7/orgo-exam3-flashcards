@@ -62,7 +62,7 @@ function drawReaction() {
   $('reaction').setAttribute('aria-label', mode === 'reagents' ? 'Starting structure and product. Work out the reagents.' : 'Starting structure and reagents. Work out the product.');
   updateVisibility();
 }
-function next() {
+function next(requestedId) {
   revealed = false;
   updateProgress();
   const pool = practiceDeck();
@@ -74,7 +74,8 @@ function next() {
     : 'Select at least one reaction above to start practicing.';
   $('study-card').hidden = pool.length === 0;
   if (!pool.length) { current = null; return; }
-  current = choose(); last = current.id; count++;
+  current = pool.find(card => card.id === requestedId) || choose(); last = current.id; count++;
+  $('jump-card').value = current.id;
   $('original-notes').open = false;
   $('answer').src = current.image;
   $('session-count').textContent = `Practice ${String(count).padStart(2, '0')}`;
@@ -111,6 +112,9 @@ function paintMechanism() {
   $('mech-flow').hidden = view.locked;
   $('mech-from').classList.toggle('active', !view.selectedId);
   $('mech-to').classList.toggle('active', Boolean(view.selectedId));
+  const companions = (view.scene.annotations || []).filter(item => item.formula).map(item => item.formula);
+  $('mech-companions').hidden = !companions.length;
+  $('mech-companions').textContent = companions.join(' · ');
   $('mech-source').textContent = view.source;
   $('mech-status').textContent = view.status;
   $('mech-status').classList.toggle('is-bad', view.bad);
@@ -152,13 +156,24 @@ for (const [name, id] of Object.entries({mode: 'practice-mode', order: 'practice
   $(id).onchange = () => {
     options[name] = $(id).value;
     try { localStorage.setItem(settingsKey, JSON.stringify(options)); } catch {}
+    updateJumpList();
     $('feedback').textContent = 'Practice options updated.';
     next();
   };
 }
 const groupNames = {alkenes:'Alkenes', alkynes:'Alkynes', alcohols:'Alcohols', halides:'Alkyl halides', epoxides:'Epoxides', carbonyls:'Carbonyls'};
 const cardInputs = new Map(), groupInputs = new Map();
+function updateJumpList() {
+  $('jump-label').hidden = options.mode !== 'mechanism';
+  if ($('jump-label').hidden) return;
+  const pool = practiceDeck();
+  $('jump-card').replaceChildren(...pool.map(card => new Option(card.name, card.id)));
+  $('jump-card').disabled = !pool.length;
+  if (current) $('jump-card').value = current.id;
+}
+$('jump-card').onchange = () => next(Number($('jump-card').value));
 function selectionChanged() {
+  updateJumpList();
   try { localStorage.setItem(selectionKey, JSON.stringify([...selected])); } catch {}
   for (const [id, input] of cardInputs) input.checked = selected.has(id);
   for (const [topic, input] of groupInputs) {
@@ -209,6 +224,7 @@ $('mech-zoom').onclick = () => {
   const enlarged = $('mechanism').classList.toggle('zoomed');
   $('mech-zoom').setAttribute('aria-pressed', String(enlarged));
   $('mech-zoom').textContent = enlarged ? 'Fit drawing' : 'Enlarge drawing';
+  paintMechanism();
 };
 $('mech-undo').onclick = () => {
   if (!attempt) return;
@@ -234,3 +250,5 @@ document.addEventListener('keydown', event => {
   else if (/^[1-4]$/.test(event.key)) { event.preventDefault(); rate(Number(event.key)); }
 });
 selectionChanged();
+
+window.matchMedia('(max-width: 600px)').addEventListener('change', () => { if (attempt && current) paintMechanism(); });
