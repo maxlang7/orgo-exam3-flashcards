@@ -38,8 +38,10 @@
 
 .mech-caption{font:600 15px "DM Sans",system-ui,sans-serif;fill:#405f54;pointer-events:none}
 
+#study-card:has(.mechanism-morph) :is(#instruction, #mech-flow) { visibility:hidden; }
+
 @media (prefers-reduced-motion: no-preference) {
-  #mech-svg .shake { animation: mechanism-shake 320ms ease-in-out; }
+  #mech-svg .shake { animation: mechanism-shake var(--shake-duration,320ms) ease-in-out; }
 }
 @keyframes mechanism-shake {
   0%, 100% { transform: translateX(0); }

@@ -14,10 +14,10 @@ const ratings = {reaction: loadRatings(key), mechanism: loadRatings(mechanismKey
 function ratingGroup() { return options.mode === 'mechanism' ? 'mechanism' : 'reaction'; }
 const $ = id => document.getElementById(id);
 const settingsKey = 'orgo-exam3-settings-v1';
-const options = {mode: 'mixed', topic: 'all', order: 'adaptive'};
+const options = {mode: 'mixed', topic: 'all', order: 'adaptive', speed: '1'};
 try {
   const stored = JSON.parse(localStorage.getItem(settingsKey));
-  for (const [name, allowed] of Object.entries({mode: ['mixed','reagents','product','mechanism'], topic: ['all','alkenes','alkynes','alcohols','halides','epoxides','carbonyls'], order: ['adaptive','random']})) {
+  for (const [name, allowed] of Object.entries({mode: ['mixed','reagents','product','mechanism'], topic: ['all','alkenes','alkynes','alcohols','halides','epoxides','carbonyls'], order: ['adaptive','random'], speed: ['0.5','1','2','0']})) {
     if (stored && allowed.includes(stored[name])) options[name] = stored[name];
   }
 } catch {}
@@ -57,7 +57,33 @@ function updateVisibility() {
   $('reaction').setAttribute('aria-label', label);
   renderReagentRoutes($('reaction'), current, mode, revealed);
 }
+let cancelMorph = null;
+function stopMorph() {
+  if (cancelMorph) cancelMorph();
+  cancelMorph = null;
+}
+function finishMorph() {
+  stopMorph();
+  attempt.advance();
+  paintMechanism();
+}
+function animateStep() {
+  const svg = $('mech-svg');
+  if (options.speed === '0' || reducedMotion.matches) {
+    finishMorph();
+    return;
+  }
+  const view = attempt.view();
+  const plan = makeMorphPlan(mechanismFor(current.id), view.stepNumber - 1, svg.clientWidth < 460, view.arrows);
+  $('mech-show').textContent = 'Skip animation';
+  $('mech-show').disabled = false;
+  $('mech-status').textContent = view.status;
+  $('mech-reveal').hidden = true;
+  $('mech-undo').disabled = true;
+  cancelMorph = playMechanismMorph(svg, plan, view.arrows, () => Number(options.speed), finishMorph);
+}
 function next(requestedId) {
+  stopMorph();
   $('feedback').hidden = options.mode === 'mechanism';
   revealed = false;
   updateProgress();
@@ -112,7 +138,7 @@ function startMechanism() {
 }
 function paintMechanism(outcome) {
   const view = attempt.view();
-  renderMechanism($('mech-svg'), view, outcome);
+  renderMechanism($('mech-svg'), view, outcome, Number(options.speed));
   $('instruction').textContent = view.prompt;
   $('mech-step').textContent = view.finished ? 'Product' : `Step ${view.stepNumber} of ${view.stepCount}`;
   Array.from($('mech-stages').children).forEach((item, index) => {
@@ -176,7 +202,14 @@ for (const [name, id] of Object.entries({mode: 'practice-mode', order: 'practice
 }
 const groupNames = {alkenes:'Alkenes', alkynes:'Alkynes', alcohols:'Alcohols', halides:'Alkyl halides', epoxides:'Epoxides', carbonyls:'Carbonyls'};
 const cardInputs = new Map(), groupInputs = new Map();
+$('animation-speed').value = options.speed;
+$('animation-speed').onchange = () => {
+  options.speed = $('animation-speed').value;
+  try { localStorage.setItem(settingsKey, JSON.stringify(options)); } catch {}
+  if (cancelMorph && options.speed === '0') finishMorph();
+};
 function updateJumpList() {
+  $('speed-label').hidden = options.mode !== 'mechanism';
   $('jump-label').hidden = options.mode !== 'mechanism';
   if ($('jump-label').hidden) return;
   const pool = practiceDeck();
@@ -237,7 +270,8 @@ $('mech-zoom').onclick = () => {
   const enlarged = $('mechanism').classList.toggle('zoomed');
   $('mech-zoom').setAttribute('aria-pressed', String(enlarged));
   $('mech-zoom').textContent = enlarged ? 'Fit drawing' : 'Enlarge drawing';
-  paintMechanism();
+  if (cancelMorph) finishMorph();
+  else paintMechanism();
 };
 $('mech-undo').onclick = () => {
   if (!attempt) return;
@@ -252,12 +286,11 @@ $('mech-reveal').onclick = () => {
 };
 $('mech-show').onclick = () => {
   if (!attempt) return;
-  if (attempt.view().locked) {
-    attempt.advance();
-    paintMechanism();
-  } else {
-    paintMechanism(attempt.check());
-  }
+  if (cancelMorph) { finishMorph(); return; }
+  if (attempt.view().locked) { animateStep(); return; }
+  const outcome = attempt.check();
+  if (outcome === 'correct') animateStep();
+  else paintMechanism(outcome);
 };
 document.addEventListener('keydown', event => {
   if (['SELECT', 'INPUT', 'TEXTAREA'].includes(event.target.tagName) || event.target.isContentEditable) return;
@@ -285,6 +318,11 @@ $('reaction-zoom').onclick = () => {
   $('reaction-zoom').setAttribute('aria-pressed', String(enlarged));
   $('reaction-zoom').textContent = enlarged ? 'Fit diagram' : 'Enlarge diagram';
 };
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+reducedMotion.addEventListener('change', () => { if (cancelMorph && reducedMotion.matches) finishMorph(); });
 selectionChanged();
 
-window.matchMedia('(max-width: 600px)').addEventListener('change', () => { if (attempt && current) paintMechanism(); });
+window.matchMedia('(max-width: 600px)').addEventListener('change', () => {
+  if (cancelMorph) finishMorph();
+  else if (attempt && current) paintMechanism();
+});

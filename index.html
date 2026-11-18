@@ -1,12 +1,13 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reaction Flashcard Trainer</title><link rel="stylesheet" href="style.css?v=overview-1"><link rel="stylesheet" href="mechanism/drawing.css?v=arrow-feedback-1"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reaction Flashcard Trainer</title><link rel="stylesheet" href="style.css?v=overview-1"><link rel="stylesheet" href="mechanism/drawing.css?v=morph-1"></head>
 <body><main>
 <header><h1>Reaction Flashcard Trainer</h1><p>09-219 Organic Chemistry <span aria-hidden="true">·</span> Exam III</p></header>
 <div class="workbench"><aside class="settings"><details id="settings-panel" open><summary>Practice settings</summary><section class="practice-options" aria-label="Practice options">
 <label for="practice-mode">Practice mode<select id="practice-mode"><option value="mixed">Conditions & products</option><option value="reagents">Conditions only</option><option value="product">Products only</option><option value="mechanism">Mechanisms (beta)</option></select></label>
 
 <label for="practice-order">Card selection<select id="practice-order"><option value="adaptive">Low confidence first</option><option value="random">Equal chance</option></select></label>
+<label id="speed-label" for="animation-speed" hidden>Animation speed<select id="animation-speed"><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="0">Off</option></select></label>
 </section>
 <details class="reaction-picker" id="reaction-picker">
 <summary>Choose reactions <span id="selection-count"></span></summary>
@@ -45,4 +46,4 @@
 </div><details id="original-notes"><summary>View original reaction &amp; notes</summary><img id="answer" alt="Original reaction sheet entry"></details></div>
 </section>
 <footer><p id="feedback" role="status"></p><span>Progress saved on this device</span></footer>
-</div></div></main><script src="deck.js"></script><script src="reagent-routes.js?v=overview-1"></script><script src="mechanism/layout.js?v=overview-1"></script><script src="mechanism/geometry.js?v=bond-targets-1"></script><script src="mechanism/render.js?v=arrow-feedback-1"></script><script src="mechanism/catalog.js?v=ester-groups-1"></script><script src="mechanisms.js?v=arrow-feedback-1"></script><script src="app.js?v=overview-1"></script></body></html>
+</div></div></main><script src="deck.js"></script><script src="reagent-routes.js?v=overview-1"></script><script src="mechanism/layout.js?v=overview-1"></script><script src="mechanism/geometry.js?v=morph-1"></script><script src="mechanism/render.js?v=morph-1"></script><script src="mechanism/transitions.js?v=morph-1"></script><script src="mechanism/morph.js?v=morph-1"></script><script src="mechanism/catalog.js?v=ester-groups-1"></script><script src="mechanisms.js?v=arrow-feedback-1"></script><script src="app.js?v=morph-1"></script></body></html>

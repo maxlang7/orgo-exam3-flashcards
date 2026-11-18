@@ -153,12 +153,7 @@ function curvedArrow(scene, from, to, previous) {
   return [best.start, best.c, best.d, best.end];
 }
 
-function arrowPathData(points, tail, head, fraction = 0) {
-  const coords = points.map((p, i) => {
-    const shift = i < 2 ? tail : head;
-    const x = p.x + (shift?.x || 0) * fraction;
-    const y = p.y + (shift?.y || 0) * fraction;
-    return x.toFixed(1) + ' ' + y.toFixed(1);
-  });
+function arrowPathData(points) {
+  const coords = points.map(p => p.x.toFixed(1) + ' ' + p.y.toFixed(1));
   return `M ${coords[0]} C ${coords.slice(1).join(' ')}`;
 }

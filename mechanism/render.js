@@ -34,25 +34,10 @@ function mechanismInner(scene, state) {
   }
   const owner = new Map();
   scene.molecules.forEach(group => group.atoms.forEach(atom => owner.set(atom.id, group)));
-  const groupOf = id => owner.get(isBondId(id) ? bondAtoms(id)[0] : id);
-  const shifts = new Map();
-  if (state.motion === 'correct') {
-    const active = new Set(arrows.flatMap(a => [groupOf(a.from), groupOf(a.to)]));
-    // Move the reacting partners toward their shared center, including on stacked layouts.
-    const cx = [...active].reduce((sum, g) => sum + g.cx, 0) / active.size;
-    const cy = [...active].reduce((sum, g) => sum + g.cy, 0) / active.size;
-    for (const group of active) {
-      const dx = cx-group.cx, dy = cy-group.cy;
-      const scale = Math.min(0.25, 21 / (Math.hypot(dx,dy) || 1));
-      shifts.set(group, {x:dx*scale, y:dy*scale-7});
-    }
-  }
   const molecules = scene.molecules.map(group => {
     const bonds = scene.bonds.filter(([from]) => owner.get(from) === group);
-    const shift = shifts.get(group);
-    const motion = shift ? feedbackTrack('translate', t => `${shift.x*t} ${shift.y*t}`) : '';
     const hits = state.static ? '' : bonds.map(drawHit).join('');
-    return `<g class="molecule">${motion}${hits}${bonds.map(drawBond).join('')}${group.atoms.map(drawAtom).join('')}${group.caption ? drawText(group.caption) : ''}</g>`;
+    return `<g class="molecule">${hits}${bonds.map(drawBond).join('')}${group.atoms.map(drawAtom).join('')}${group.caption ? drawText(group.caption) : ''}</g>`;
   }).join('');
   const separators = scene.texts.filter(item => item.className === 'mech-plus').map(drawText).join('');
   if (state.static) return molecules + separators;
@@ -60,9 +45,7 @@ function mechanismInner(scene, state) {
   const paths = arrows.map((arrow, index) => {
     const curve = curvedArrow(scene, arrow.from, arrow.to, routedPoints);
     const kind = index === state.mistakeIndex ? 'mistake' : state.locked ? 'good' : 'draft';
-    const motion = shifts.size ? feedbackTrack('d', t =>
-      arrowPathData(curve, shifts.get(groupOf(arrow.from)), shifts.get(groupOf(arrow.to)), t)) : '';
-    return `<path class="mech-arrow is-${kind}" d="${arrowPathData(curve)}" marker-end="url(#arrow-${kind})">${motion}</path>`;
+    return `<path class="mech-arrow is-${kind}" d="${arrowPathData(curve)}" marker-end="url(#arrow-${kind})"/>`;
   }).join('');
   return `<defs>
 
@@ -72,19 +55,11 @@ function mechanismInner(scene, state) {
 </defs><g class="${state.locked ? 'is-locked' : ''} ${state.motion === 'incorrect' ? 'shake' : ''}">${molecules}${separators}${paths}</g>`;
 }
 
-// Keep arrow endpoints in sync with the molecules they are attached to.
-function feedbackTrack(attribute, frame) {
-  const tag = attribute === 'translate' ? 'animateTransform' : 'animate';
-  const target = attribute === 'translate' ? 'attributeName="transform" type="translate"' : 'attributeName="d"';
-  const values = [0, 1, -0.13, 0].map(frame).join(';');
-  return `<${tag} ${target} begin="indefinite" dur="680ms" values="${values}" keyTimes="0;.42;.77;1" calcMode="spline" keySplines=".25 .7 .3 1;.4 0 .35 1;.2 .7 .3 1"/>`;
-}
-
-function renderMechanism(svg, view, outcome) {
+function renderMechanism(svg, view, outcome, speed = 1) {
   const compact = svg.clientWidth > 0 && svg.clientWidth < 460;
   const scene = layoutScene(view.scene, compact);
   svg.setAttribute('viewBox', scene.viewBox);
-  const motion = outcome && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? outcome : null;
+  svg.style.setProperty('--shake-duration', `${320 / (speed || 1)}ms`);
+  const motion = speed && outcome && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? outcome : null;
   svg.innerHTML = mechanismInner(scene, {...view, motion});
-  if (motion === 'correct') svg.querySelectorAll('animate, animateTransform').forEach(track => track.beginElement());
 }

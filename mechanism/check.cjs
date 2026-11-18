@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const context = vm.createContext({});
-for (const file of ['layout.js','geometry.js','catalog.js','render.js','../mechanisms.js']) {
+for (const file of ['layout.js','geometry.js','catalog.js','render.js','transitions.js','morph.js','../mechanisms.js']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, file), 'utf8'), context);
 }
 const catalog = vm.runInContext('mechanisms', context);
@@ -98,18 +98,39 @@ for (const mechanism of catalog) {
       assert.equal((svg.match(/class="mech-arrow /g) || []).length, view.arrowCount);
     }
     const outcome = attempt.check();
-    if (view.arrowCount) {
-      assert.equal(outcome, 'correct');
-      const layout = context.layoutScene(view.scene, false);
-      const animated = context.mechanismInner(layout, {...attempt.view(), motion:outcome});
-      assert(animated.includes('<animateTransform'));
-      assert.equal((animated.match(/<animate attributeName="d"/g) || []).length, view.arrowCount);
-      assert(!/\b(?:NaN|Infinity)\b/.test(animated));
-    } else assert.equal(outcome, undefined);
+    assert.equal(outcome, view.arrowCount ? 'correct' : undefined);
+    for (const compact of [false,true]) {
+      const plan = context.makeMorphPlan(mechanism, view.stepNumber-1, compact, view.arrows);
+      assert.equal(plan.mapped.size, new Set(plan.mapped.values()).size, 'Atom mappings must be one-to-one');
+      for (const [from,to] of plan.mapped) {
+        assert.equal(context.atomById(plan.source,from).element, context.atomById(plan.target,to).element);
+      }
+      for (const t of [0,.2,.48,.67,.85,1]) {
+        const frame = context.morphFrame(plan,t);
+        assert(!/NaN|Infinity|undefined/.test(frame.viewBox));
+        assert(!/\b(?:NaN|Infinity|undefined)\b/.test(frame.markup));
+        assert(frame.markup.includes('class="bond"'));
+      }
+      assert.equal(context.morphFrame(plan,1).viewBox,plan.target.viewBox);
+    }
     assert(attempt.view().stepComplete);
     attempt.advance();
   }
   assert(attempt.view().finished);
+}
+// The Grignard carbon must leave Mg and become bonded to the old carbonyl carbon.
+const grignard = context.mechanismFor(41);
+const addition = context.makeMorphPlan(grignard,0,false,[
+  {from:'bond:cAlpha|mg',to:'cCO'}, {from:'bond:cCO|oCO',to:'oCO'}
+]);
+assert.equal(addition.mapped.get('cCO'),'cC');
+assert(addition.bonds.some(t => !t.next && t.old.includes('cAlpha') && t.old.includes('mg')));
+assert(addition.bonds.some(t => !t.old && t.next.includes('cAlpha') && t.next.includes('cC')));
+assert(addition.bonds.some(t => t.old?.[2] === 2 && t.next?.[2] === 1));
+for (const h of ['h1','h2']) {
+  const workup = context.makeMorphPlan(grignard,1,false,[{from:'oAlk',to:h}, {from:context.bondId(h,'oW'),to:'oW'}]);
+  assert.equal(workup.absorbed.get(h),'oAlk');
+  assert(!workup.absorbed.has(h === 'h1' ? 'h2' : 'h1'));
 }
 for (const [cardId, intermediate] of [[32,'opened'], [33,'alkoxide'], [34,'alkoxide']]) {
   const mechanism = context.mechanismFor(cardId);
