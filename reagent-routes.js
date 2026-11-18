@@ -4,6 +4,7 @@
 // https://openstax.org/books/organic-chemistry/pages/17-7-oxidation-of-alcohols
 // https://ursula.chem.yale.edu/~chem220/chem220js/STUDYAIDS/oxidation/DMSOoxidation.html
 // Other routes follow the course sheet and standard functional-group reactions:
+// https://openstax.org/books/organic-chemistry/pages/8-7-oxidation-of-alkenes-epoxidation-and-hydroxylation
 // https://openstax.org/books/organic-chemistry/pages/8-8-oxidation-of-alkenes-cleavage-to-carbonyl-compounds
 // https://organicchemistrydata.org/reusch/virtualtext/alcohol-reactivity-1/
 const reagentRoutes = (() => {
@@ -13,7 +14,10 @@ const reagentRoutes = (() => {
   const swern = ['1. DMSO, oxalyl chloride', '2. Et₃N'];
   const coreyKim = ['1. Me₂S, NCS', '2. Et₃N'];
   return new Map([
-    [8, [['1. OsO₄, pyridine', '2. NaHSO₃, H₂O'], ['KMnO₄, NaOH, H₂O', 'cold, dilute']]],
+    [7, [['mCPBA'], ['CH₃CO₃H'], ['PhCO₃H']]],
+    [8, [['1. OsO₄, pyridine', '2. NaHSO₃, H₂O'], ['KMnO₄, NaOH, H₂O', 'cold, dilute'], ['cat. OsO₄, NMO', 'H₂O, acetone']]],
+    [9, [['1. mCPBA', '2. NaOH, H₂O'], ['1. CH₃CO₃H', '2. NaOH, H₂O'], ['1. PhCO₃H', '2. NaOH, H₂O']]],
+    [10, [['CH₂I₂, Zn(Cu)'], ['CH₂N₂', 'hν or heat']]],
     [12, [['1. O₃', '2. Me₂S'], ['1. O₃', '2. Zn, H₂O'], ['1. O₃', '2. PPh₃']]],
     [17, [['excess H₂, Pt'], ['excess H₂, Pd/C'], ['excess H₂, Ni']]],
     [19, [['conc. H₂SO₄', 'heat'], ['conc. H₃PO₄', 'heat']]],
