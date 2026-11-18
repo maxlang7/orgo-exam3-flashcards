@@ -1228,64 +1228,49 @@ function buildMechanisms() {
   }
 
   {
+    const acylGroup = {id: 'rAcyl', label: 'R', name: 'substituent on the carbonyl carbon'};
+    const alkoxyGroup = {id: 'rAlkoxy', label: 'R′', name: 'substituent on the ester oxygen'};
     const c = A('cCO', [170, 210], {name: 'carbonyl carbon'});
-    const me = sprout(c, 210, {id: 'meL', label: 'H₃C', name: 'the acetyl methyl', pad: 22});
+    const r = sprout(c, 210, acylGroup);
     const o = sprout(c, 90, {id: 'oCO', label: 'O', element: 'O', name: 'carbonyl oxygen', pad: 16}, 70);
     const oR = sprout(c, 330, {id: 'oR', label: 'O', element: 'O', name: 'the alkoxy oxygen', pad: 16}, 70);
-    const meR = sprout(oR, 270, {id: 'meR', label: 'H₃C', name: 'the methoxy methyl', pad: 22}, 66);
-    const reactants = join({atoms: [me, c, o, oR, meR], bonds: [['meL', 'cCO', 1], ['cCO', 'oCO', 2], ['cCO', 'oR', 1], ['oR', 'meR', 1]]}, hydride(560, 160));
+    const rPrime = sprout(oR, 30, alkoxyGroup);
+    const reactants = join({atoms: [r, c, o, oR, rPrime], bonds: [['rAcyl', 'cCO', 1], ['cCO', 'oCO', 2], ['cCO', 'oR', 1], ['oR', 'rAlkoxy', 1]]}, hydride(560, 160));
     const tetra = capAt(190, 250, {
       name: 'the tetrahedral carbon',
-      left: {id: 'meL', label: 'H₃C', name: 'the acetyl methyl', pad: 22},
+      left: acylGroup,
       right: {id: 'oR', label: 'O', element: 'O', name: 'the alkoxy oxygen', pad: 16},
       upL: {id: 'oAlk', label: 'O⁻', element: 'O', name: 'the alkoxide oxygen', pad: 18},
       upR: {id: 'hH', label: 'H', element: 'H', name: 'the hydride that added', pad: 14}
     });
-    const meOnO = sprout(tetra.right, -20, {id: 'meR', label: 'H₃C', name: 'the methoxy methyl', pad: 22}, 64);
-    const tetraScene = {atoms: [...tetra.atoms, meOnO], bonds: [...tetra.bonds, ['oR', 'meR', 1]]};
+    const rPrimeOnO = sprout(tetra.right, -20, alkoxyGroup);
+    const tetraScene = {atoms: [...tetra.atoms, rPrimeOnO], bonds: [...tetra.bonds, ['oR', 'rAlkoxy', 1]]};
     const ald = A('cCO', [180, 200], {name: 'carbonyl carbon'});
     const aldehyde = join({
       atoms: [
-        sprout(ald, 210, {id: 'meL', label: 'H₃C', name: 'the methyl', pad: 22}),
+        sprout(ald, 210, acylGroup),
         ald,
         sprout(ald, 330, {id: 'hAld', label: 'H', element: 'H', name: 'the aldehyde hydrogen', pad: 14}, 58),
         sprout(ald, 90, {id: 'oCO', label: 'O', element: 'O', name: 'carbonyl oxygen', pad: 16}, 68),
         A('oR', [520, 300], {label: 'O⁻', element: 'O', name: 'the expelled alkoxide', pad: 18}),
-        A('meR', [600, 300], {label: 'H₃C', name: 'the methoxy methyl', pad: 22})
+        A(alkoxyGroup.id, [600, 300], alkoxyGroup)
       ],
-      bonds: [['meL', 'cCO', 1], ['cCO', 'hAld', 1], ['cCO', 'oCO', 2], ['oR', 'meR', 1]]
+      bonds: [['rAcyl', 'cCO', 1], ['cCO', 'hAld', 1], ['cCO', 'oCO', 2], ['oR', 'rAlkoxy', 1]]
     }, hydride(560, 150));
-    const eth = zz([
-      {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22},
-      {id: 'c2', name: 'the methylene carbon'}
-    ], 140, 220, 28);
-    const oEth = sprout(eth[1], 28, {id: 'oAlk', label: 'O⁻', element: 'O', name: 'the alkoxide of the reduced ester', pad: 18}, 66);
-    const both = join({
-      atoms: [...eth, oEth, A('oR', [500, 280], {label: 'O⁻', element: 'O', name: 'the methoxide that left', pad: 18}), A('meR', [580, 280], {label: 'H₃C', name: 'the methoxy methyl', pad: 22})],
-      bonds: [['c1', 'c2', 1], ['c2', 'oAlk', 1], ['oR', 'meR', 1]]
-    }, water(660, 160, 180));
-    const ethOH = zz([
-      {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22},
-      {id: 'c2', name: 'the methylene carbon'}
-    ], 140, 200, 28);
-    const afterOne = join({
-      atoms: [...ethOH, sprout(ethOH[1], 28, {id: 'oH', label: 'OH', element: 'O', name: 'the new alcohol', pad: 18}, 66), A('oR', [480, 280], {label: 'O⁻', element: 'O', name: 'methoxide', pad: 18}), A('meR', [560, 280], {label: 'H₃C', name: 'the methoxy methyl', pad: 22})],
-      bonds: [['c1', 'c2', 1], ['c2', 'oH', 1], ['oR', 'meR', 1]]
-    }, water(660, 160, 170));
-    const prodA = zz([
-      {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22},
-      {id: 'c2', name: 'the methylene carbon'}
-    ], 150, 180, 28);
-    const prodB = zz([
-      {id: 'meR', label: 'H₃C', name: 'the methanol methyl', pad: 22}
-    ], 480, 250, 0);
-    const product = {
-      atoms: [...prodA, sprout(prodA[1], 28, {id: 'oH', label: 'OH', element: 'O', name: 'the ethanol oxygen', pad: 18}, 66), ...prodB, sprout(prodB[0], 0, {id: 'oR', label: 'OH', element: 'O', name: 'the methanol oxygen', pad: 18}, 66)],
-      bonds: [['c1', 'c2', 1], ['c2', 'oH', 1], ['meR', 'oR', 1]]
-    };
+    // After the second hydride, the former carbonyl carbon is CH₂ in every workup scene.
+    function workupProducts(acylProtonated, leavingGroupProtonated) {
+      const acylO = {id: 'oAlk', element: 'O', label: acylProtonated ? 'OH' : 'O⁻', name: 'oxygen from the carbonyl'};
+      const leavingO = {id: 'oR', element: 'O', label: leavingGroupProtonated ? 'OH' : 'O⁻', name: 'oxygen from the alkoxy group'};
+      const reduced = zz([acylGroup, {id: 'cCO', label: 'CH₂', name: 'former carbonyl carbon'}, acylO], 140, 220, 30);
+      const leaving = zz([alkoxyGroup, leavingO], 480, 250, 0);
+      return {atoms: [...reduced, ...leaving], bonds: [['rAcyl', 'cCO', 1], ['cCO', 'oAlk', 1], ['rAlkoxy', 'oR', 1]]};
+    }
+    const both = join(workupProducts(false, false), water(660, 160, 180));
+    const afterOne = join(workupProducts(true, false), water(660, 160, 170));
+    const product = workupProducts(true, true);
     mechanisms.push(mech(37,
-      'Lithium aluminum hydride reduces the ester. The first hydride adds, the alkoxy group leaves, and a second hydride reduces the aldehyde. Water protonates both alkoxides at the end. The sheet writes R. This drawing uses a methyl ester. No oxygen-aluminum bond is drawn.',
-      'The products are ethanol and methanol.',
+      'Lithium aluminum hydride reduces the ester. The first hydride adds, the alkoxy group leaves, and a second hydride reduces the aldehyde. Water protonates both alkoxides at the end.',
+      'The former carbonyl carbon becomes the CH₂ in RCH₂OH. The ester’s alkoxy group gives R′OH.',
       {reactants, tetra: tetraScene, aldehyde, both, afterOne, product},
       [
         step('reactants', 'First hydride addition', [
@@ -1300,8 +1285,8 @@ function buildMechanisms() {
           leave('cCO', 'hH', 'mH'),
           leave('oCO', 'cCO', 'oCO')
         ]),
-        step('both', 'Ethanol formation', protonate('oAlk')),
-        step('afterOne', 'Methanol formation', protonate('oR'))
+        step('both', 'RCH₂OH formation', protonate('oAlk')),
+        step('afterOne', 'R′OH formation', protonate('oR'))
       ]));
   }
   {

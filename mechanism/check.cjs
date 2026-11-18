@@ -122,6 +122,19 @@ for (const [cardId, intermediate] of [[32,'opened'], [33,'alkoxide'], [34,'alkox
       'Terminal methylene is not stereogenic');
   }
 }
+const esterReduction = context.mechanismFor(37);
+for (const scene of Object.values(esterReduction.scenes)) {
+  assert.equal(context.atomById(scene, 'rAcyl').label, 'R');
+  assert.equal(context.atomById(scene, 'rAlkoxy').label, 'R′');
+  assert(context.knownTarget(scene, 'bond:oR|rAlkoxy'));
+}
+for (const key of ['both', 'afterOne', 'product']) {
+  const scene = esterReduction.scenes[key];
+  assert.equal(context.atomById(scene, 'cCO').label, 'CH₂');
+  assert(context.knownTarget(scene, 'bond:cCO|rAcyl') && context.knownTarget(scene, 'bond:cCO|oAlk'));
+  assert.equal(context.atomById(scene, 'oAlk').label, key === 'both' ? 'O⁻' : 'OH');
+  assert.equal(context.atomById(scene, 'oR').label, key === 'product' ? 'OH' : 'O⁻');
+}
 for (const [id, scene] of [[37,'tetra'], [42,'tetra'], [43,'mono']]) {
   const step = context.mechanismFor(id).steps.find(s => s.scene === scene);
   assert(step.choices[0].arrows.some(a => a.to === 'bond:cC|oAlk' && a.sources[0].from === 'oAlk'));
