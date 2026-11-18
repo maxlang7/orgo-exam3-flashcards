@@ -71,6 +71,17 @@ function buildMechanisms() {
   function mech(cardId, source, doneStatus, scenes, steps, doneScene = 'product') {
     return {cardId, source, doneStatus, doneScene, scenes, steps};
   }
+  function pyridine(nitrogenId, x, y, nitrogenOnRight = false) {
+    const radius = 48;
+    const centerX = x + (nitrogenOnRight ? -radius : radius);
+    const atoms = [A(nitrogenId, [x, y], {element: 'N', label: 'N', name: 'pyridine nitrogen'})];
+    for (let i = 1; i < 6; i++) {
+      const angle = (nitrogenOnRight ? 0 : 180) - i * 60;
+      atoms.push(A(`pyC${i}`, P(centerX, y, angle, radius), {name: 'pyridine ring carbon'}));
+    }
+    const bonds = atoms.map((atom, i) => [atom.id, atoms[(i + 1) % 6].id, i % 2 === 0 ? 2 : 1]);
+    return {atoms, bonds};
+  }
   function water(x, y, open = 170) {
     const o = A('oW', [x, y], {label: 'O', element: 'O', name: 'water oxygen', pad: 16});
     const h1 = A('h1', P(x, y, open + 52.2, 62), {label: 'H', element: 'H', name: 'a hydrogen of water', pad: 14});
@@ -678,9 +689,6 @@ function buildMechanisms() {
       scene.bonds.push([chromium.id, id, order]);
     }
   }
-  function beside(atom, dx, dy, spec) {
-    return A(spec.id, [Math.round(atom.x + dx), Math.round(atom.y + dy)], spec);
-  }
   function brPair(x, y, idA, idB, nameA, nameB) {
     const a = A(idA, [x, y], {label: 'Br', element: 'Br', name: nameA, pad: 16});
     const b = A(idB, P(x, y, 0, 72), {label: 'Br', element: 'Br', name: nameB, pad: 16});
@@ -851,11 +859,12 @@ function buildMechanisms() {
     const o2 = sprout(s, 20, {id: 'oS2', label: 'O', element: 'O', name: 'a sulfonyl oxygen', pad: 16}, 56);
     const cl = sprout(s, -50, {id: 'clT', label: 'Cl', element: 'Cl', name: 'the chlorine that leaves', pad: 16}, 60);
     const ts = sprout(s, 180, {id: 'cTs', label: 'Tol', name: 'the tolyl group', pad: 16}, 62);
-    const n = A('nPy', [660, 250], {label: 'Py', element: 'N', name: 'pyridine nitrogen', pad: 16});
-    const reactants = join(alcohol, {atoms: [s, o1, o2, cl, ts, n], bonds: [['sT', 'oS1', 2], ['sT', 'oS2', 2], ['sT', 'clT', 1], ['sT', 'cTs', 1]]});
+    const base = pyridine('nPy', 660, 250);
+    const reactants = join(alcohol, {atoms: [s, o1, o2, cl, ts], bonds: [['sT', 'oS1', 2], ['sT', 'oS2', 2], ['sT', 'clT', 1], ['sT', 'cTs', 1]]}, base);
     const attached = roh(90, 270);
     const s2 = sprout(attached.o, -10, {id: 'sT', label: 'S', element: 'S', name: 'sulfur', pad: 16}, 66);
-    const mid = {atoms: [...attached.atoms, s2, A('clT', [560, 150], {label: 'Cl⁻', element: 'Cl', name: 'chloride', pad: 18}), A('nPy', [660, 230], {label: 'Py', element: 'N', name: 'pyridine nitrogen', pad: 16})], bonds: [...attached.bonds, ['oH', 'sT', 1]], annotations: [charge(attached.o, '⁺')]};
+    const chloride = A('clT', [760, 150], {label: 'Cl⁻', element: 'Cl', name: 'chloride'});
+    const mid = join({atoms: [...attached.atoms, s2, chloride], bonds: [...attached.bonds, ['oH', 'sT', 1]], annotations: [charge(attached.o, '⁺')]}, base);
     mechanisms.push(mech(20,
       'The alcohol attacks sulfur of tosyl chloride, chloride leaves, and pyridine takes the proton.',
       'The product is the tosylate.',
@@ -943,8 +952,8 @@ function buildMechanisms() {
     const o = sprout(chain[2], 28, {id: 'oH', label: 'O', element: 'O', name: 'the chromate ester oxygen', pad: 16}, 76);
     const hC = sprout(chain[2], -98, {id: 'hCar', label: 'H', element: 'H', name: 'a carbinol hydrogen', pad: 14}, 70);
     const cr2 = sprout(o, -78, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 86);
-    const base = beside(hC, 136, 52, {id: 'oB', label: 'Py', element: 'N', name: 'pyridine nitrogen', pad: 16});
-    const chromate = {atoms: [...chain, o, hC, cr2, base], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oH', 1], ['c3', 'hCar', 1], ['oH', 'cr', 1]]};
+    const base = pyridine('oB', hC.x + 136, hC.y + 52);
+    const chromate = join({atoms: [...chain, o, hC, cr2], bonds: [['c1', 'c2', 1], ['c2', 'c3', 1], ['c3', 'oH', 1], ['c3', 'hCar', 1], ['oH', 'cr', 1]]}, base);
     const c = A('cCO', [240, 200], {name: 'carbonyl carbon'});
     const product = {atoms: [sprout(c, 210, {id: 'c2', label: 'H₃C', name: 'the chain', pad: 22}), c, sprout(c, 330, {id: 'hAld', label: 'H', element: 'H', name: 'the aldehyde hydrogen', pad: 14}, 60), sprout(c, 90, {id: 'oCO', label: 'O', element: 'O', name: 'carbonyl oxygen', pad: 16}, 68)], bonds: [['c2', 'cCO', 1], ['cCO', 'hAld', 1], ['cCO', 'oCO', 2]]};
     addChromateLigands(chromate, cr2, 100);
@@ -969,8 +978,8 @@ function buildMechanisms() {
     const ester = ipa(160, 275, {id: 'oH', label: 'O', element: 'O', name: 'the chromate ester oxygen', pad: 16});
     const h2 = sprout(ester.c2, 152, {id: 'hCar', label: 'H', element: 'H', name: 'the hydrogen on the carbinol carbon', pad: 14}, 72);
     const cr2 = sprout(ester.o, 40, {id: 'cr', label: 'Cr', element: 'Cr', name: 'chromium', pad: 16}, 86);
-    const base = beside(h2, -16, -82, {id: 'oB', label: 'Py', element: 'N', name: 'pyridine nitrogen', pad: 16});
-    const chromate = {atoms: [...ester.atoms, h2, cr2, base], bonds: [...ester.bonds, ['c2', 'hCar', 1], ['oH', 'cr', 1]]};
+    const base = pyridine('oB', h2.x - 16, h2.y - 82, true);
+    const chromate = join({atoms: [...ester.atoms, h2, cr2], bonds: [...ester.bonds, ['c2', 'hCar', 1], ['oH', 'cr', 1]]}, base);
     addChromateLigands(chromate, cr2, 220);
     mechanisms.push(mech(24,
       'Start with the chromate ester of 2-propanol. Draw its elimination to acetone.',
