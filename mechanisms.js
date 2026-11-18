@@ -72,14 +72,24 @@ function createAttempt(mech) {
   let phase = 'drawing';
   let mistake = null;
   let usedAnswer = false;
+  let variantKey = null;
+  let queuedVariant = null;
 
   function step() { return mech.steps[stepIndex]; }
-  function scene() { return mech.scenes[phase === 'finished' ? mech.doneScene : step().scene]; }
+  function choices() { return (variantKey && step().variants?.[variantKey]) || step().choices; }
+  function sceneKey() {
+    if (phase === 'finished') return mech.doneScene;
+    return (variantKey && step().variants?.[variantKey]) ? variantKey : step().scene;
+  }
+  function scene() { return mech.scenes[sceneKey()]; }
+  function nextSceneKey() {
+    return queuedVariant || mech.steps[stepIndex + 1]?.scene || mech.doneScene;
+  }
   function startStep() {
     drawing = [];
     pending = null;
     mistake = null;
-    phase = step().choices[0].arrows.length ? 'drawing' : 'workup';
+    phase = choices()[0].arrows.length ? 'drawing' : 'workup';
   }
   startStep();
   return {
@@ -101,8 +111,11 @@ function createAttempt(mech) {
     },
     check() {
       if (phase !== 'drawing' || pending !== null || !drawing.length) return;
-      const comparisons = step().choices.map(choice => compareDrawing(choice, drawing));
-      if (comparisons.some(c => !c.remaining.length && !c.unmatched.length)) {
+      const choicesNow = choices();
+      const comparisons = choicesNow.map(choice => compareDrawing(choice, drawing));
+      const match = comparisons.findIndex(c => !c.remaining.length && !c.unmatched.length);
+      if (match >= 0) {
+        queuedVariant = choicesNow[match].nextScene || null;
         phase = 'solved';
         return 'correct';
       }
@@ -111,7 +124,7 @@ function createAttempt(mech) {
     },
     reveal() {
       if (phase !== 'drawing') return;
-      drawing = step().choices[0].arrows.map(arrow => ({from: arrow.sources[0].from, to: arrow.to}));
+      drawing = choices()[0].arrows.map(arrow => ({from: arrow.sources[0].from, to: arrow.to}));
       pending = null;
       mistake = null;
       phase = 'revealed';
@@ -121,9 +134,13 @@ function createAttempt(mech) {
       if (phase === 'drawing' || phase === 'finished') return;
       if (stepIndex + 1 < mech.steps.length) {
         stepIndex++;
+        variantKey = queuedVariant;
+        queuedVariant = null;
         startStep();
       } else {
         phase = 'finished';
+        variantKey = null;
+        queuedVariant = null;
         drawing = [];
       }
     },
@@ -133,11 +150,12 @@ function createAttempt(mech) {
       let status = mistake?.message ?? '';
       if (phase === 'solved') status = 'Step correct.';
       return {
-        scene: scene(), arrows: drawing, selectedId: pending, stepNumber: stepIndex + 1,
+        scene: scene(), sceneKey: sceneKey(), nextSceneKey: nextSceneKey(),
+        arrows: drawing, selectedId: pending, stepNumber: stepIndex + 1,
         stepCount: mech.steps.length, locked, finished, stepComplete: locked && !finished,
         bad: Boolean(mistake), mistakeIndex: mistake?.index, status, canUndo: !locked && (pending !== null || drawing.length > 0),
         canCheck: !locked && pending === null && drawing.length > 0,
-        arrowCount: step().choices[0].arrows.length,
+        arrowCount: choices()[0].arrows.length,
         prompt: finished ? (usedAnswer ? 'Rate your confidence after seeing the answer.' : 'Rate your confidence.')
           : locked ? 'Review this step, then continue.' : 'Draw your arrows, then check the step.'
       };

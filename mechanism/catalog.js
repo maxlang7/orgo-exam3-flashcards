@@ -237,7 +237,7 @@ function buildMechanisms() {
   }
   function borane(x, y) {
     const b = A('bN', [x, y], {label: 'B', element: 'B', name: 'boron', pad: 16});
-    const h = A('hB', P(x, y, 180, 64), {label: 'H', element: 'H', name: 'the hydrogen that adds', pad: 14});
+    const h = A('hB', P(x, y, 180, 64), {label: 'H', element: 'H', name: 'a hydrogen on boron', pad: 14});
     const h2 = A('hB2', P(x, y, 55, 60), {label: 'H', element: 'H', name: 'a hydrogen on boron', pad: 14});
     const h3 = A('hB3', P(x, y, -55, 60), {label: 'H', element: 'H', name: 'a hydrogen on boron', pad: 14});
     return {atoms: [h, b, h2, h3], bonds: [['hB', 'bN', 1], ['bN', 'hB2', 1], ['bN', 'hB3', 1]]};
@@ -295,8 +295,8 @@ function buildMechanisms() {
 
   {
     const hg = A('hg', [560, 190], {shorthand: 'Hg(OAc)₂', label: 'Hg', element: 'Hg', name: 'mercury', pad: 18});
-    const oAc = A('oAc', P(560, 190, 20, 70), {label: 'OAc', element: 'O', name: 'the acetate that leaves', pad: 22});
-    const reactants = join(propene(110, 240), {atoms: [hg, oAc, sprout(hg, 200, {id: 'oAc2', label: 'AcO', element: 'O', name: 'second acetate'}, 70)], bonds: [['hg', 'oAc', 1], ['hg', 'oAc2', 1]]});
+    const oAc = A('oAc', P(560, 190, 20, 70), {label: 'OAc', element: 'O', name: 'an acetate ligand', pad: 22});
+    const reactants = join(propene(110, 240), {atoms: [hg, oAc, sprout(hg, 200, {id: 'oAc2', label: 'AcO', element: 'O', name: 'an acetate ligand'}, 70)], bonds: [['hg', 'oAc', 1], ['hg', 'oAc2', 1]]});
     const base = chain3(160, 230);
     const brg = A('hg', midOut(160, 230, base[1], base[2], 54), {label: 'HgOAc⁺', element: 'Hg', name: 'mercury in the mercurinium', pad: 20});
     const cation = join(
@@ -322,11 +322,12 @@ function buildMechanisms() {
       'The product is propan-2-ol, with no rearrangement.',
       {reactants, cation, opened, replace, product},
       [
-        step('reactants', 'Mercurinium ion formation', [
-          leave('hg', 'c2', 'c3'),
-          lone('c3', 'hg'),
-          leave('oAc', 'hg', 'oAc')
-        ]),
+        step('reactants', 'Mercurinium ion formation',
+          ['oAc', 'oAc2'].flatMap(acetate => ['c3', 'c2'].map(carbon => ({arrows: [
+            leave('hg', 'c2', 'c3'),
+            lone(carbon, 'hg'),
+            leave(acetate, 'hg', acetate)
+          ]})))),
         step('cation', 'Ring opening', [
           lone('c2', 'oW'),
           leave('hg', 'c2', 'hg')
@@ -369,10 +370,11 @@ function buildMechanisms() {
       'The product is propan-1-ol. Workup protonates the alkoxide.',
       {reactants, boraneScene, migrate, cleavage, product},
       [
-        step('reactants', 'Hydroboration', [
-          leave('bN', 'c2', 'c3'),
-          leave('c2', 'hB', 'bN')
-        ]),
+        step('reactants', 'Hydroboration',
+          ['hB', 'hB2', 'hB3'].map(hydride => ({arrows: [
+            leave('bN', 'c2', 'c3'),
+            leave('c2', hydride, 'bN')
+          ]}))),
         step('boraneScene', 'Peroxide addition', [lone('bN', 'oPer')]),
         step('migrate', 'Alkyl migration', [
           leave('oPer', 'c3', 'bN'),
@@ -427,14 +429,15 @@ function buildMechanisms() {
       'The product is the trans dibromide.',
       {reactants, bromonium, product},
       [
-        step('reactants', 'Bromonium ion formation', [
-          leave('brA', 'r0', 'r1'),
-          leave('brB', 'brA', 'brB'),
-          lone('r1', 'brA')
-        ]),
+        step('reactants', 'Bromonium ion formation',
+          ['r1', 'r0'].map(carbon => ({arrows: [
+            leave('brA', 'r0', 'r1'),
+            leave('brB', 'brA', 'brB'),
+            lone(carbon, 'brA')
+          ]}))),
         step('bromonium', 'Ring opening', [
-          lone('r0', 'brB'),
-          leave('brA', 'r0', 'brA')
+          {arrows: [lone('r0', 'brB'), leave('brA', 'r0', 'brA')]},
+          {arrows: [lone('r1', 'brB'), leave('brA', 'r1', 'brA')]}
         ])
       ]));
   }
@@ -465,11 +468,12 @@ function buildMechanisms() {
       'The product is the bromohydrin, with OH on the middle carbon and Br on the end.',
       {reactants, bromonium, oxonium, product},
       [
-        step('reactants', 'Bromonium ion formation', [
-          leave('brA', 'c2', 'c3'),
-          leave('brB', 'brA', 'brB'),
-          lone('c3', 'brA')
-        ]),
+        step('reactants', 'Bromonium ion formation',
+          ['c3', 'c2'].map(carbon => ({arrows: [
+            leave('brA', 'c2', 'c3'),
+            leave('brB', 'brA', 'brB'),
+            lone(carbon, 'brA')
+          ]}))),
         step('bromonium', 'Ring opening', [
           lone('c2', 'oW'),
           leave('brA', 'c2', 'brA')
@@ -515,12 +519,13 @@ function buildMechanisms() {
       'The product is the epoxide.',
       {reactants, product},
       [
-        step('reactants', 'Concerted epoxidation', [
-          leave('oEp', 'c1', 'c2'),
-          leave('oC', 'oL', 'oEp'),
-          leave('hP', 'cP', 'oC'),
-          leave('c2', 'oEp', 'hP')
-        ])
+        step('reactants', 'Concerted epoxidation',
+          ['c2', 'c1'].map(carbon => ({arrows: [
+            leave('oEp', 'c1', 'c2'),
+            leave('oC', 'oL', 'oEp'),
+            leave('hP', 'cP', 'oC'),
+            leave(carbon, 'oEp', 'hP')
+          ]})))
       ]));
   }
 
@@ -579,12 +584,13 @@ function buildMechanisms() {
       'The product is propane-1,2-diol.',
       {reactants, epScene, alkoxide, product},
       [
-        step('reactants', 'Epoxidation', [
-          leave('oEp', 'c2', 'c3'),
-          leave('oC', 'oL', 'oEp'),
-          leave('hP', 'cP', 'oC'),
-          leave('c3', 'oEp', 'hP')
-        ]),
+        step('reactants', 'Epoxidation',
+          ['c3', 'c2'].map(carbon => ({arrows: [
+            leave('oEp', 'c2', 'c3'),
+            leave('oC', 'oL', 'oEp'),
+            leave('hP', 'cP', 'oC'),
+            leave(carbon, 'oEp', 'hP')
+          ]}))),
         step('epScene', 'Ring opening', [
           lone('cL', 'oHO'),
           leave('oE', 'cL', 'oE')
@@ -605,19 +611,20 @@ function buildMechanisms() {
       'The product is the cyclopropane.',
       {reactants, product},
       [
-        step('reactants', 'Carbene formation and cyclopropanation', [
-          leave('cCar', 'c2', 'c3'),
-          lone('c3', 'cCar')
-        ])
+        step('reactants', 'Carbene formation and cyclopropanation',
+          ['c3', 'c2'].map(carbon => ({arrows: [
+            leave('cCar', 'c2', 'c3'),
+            lone(carbon, 'cCar')
+          ]})))
       ], {conditions: ['CH₂N₂', 'hν or heat']}));
   }
 
   {
     const h = A('hC', [140, 200], {label: 'H', element: 'H', name: 'the hydrogen of chloroform', pad: 14});
     const c = A('cCl', P(140, 200, 0, 64), {name: 'the chloroform carbon'});
-    const cl1 = sprout(c, 45, {id: 'cl1', label: 'Cl', element: 'Cl', name: 'a chlorine that stays', pad: 16}, 64);
-    const cl2 = sprout(c, -40, {id: 'cl2', label: 'Cl', element: 'Cl', name: 'a chlorine that stays', pad: 16}, 62);
-    const cl3 = sprout(c, 115, {id: 'cl3', label: 'Cl', element: 'Cl', name: 'the chlorine that leaves', pad: 16}, 64);
+    const cl1 = sprout(c, 45, {id: 'cl1', label: 'Cl', element: 'Cl', name: 'a chlorine of chloroform', pad: 16}, 64);
+    const cl2 = sprout(c, -40, {id: 'cl2', label: 'Cl', element: 'Cl', name: 'a chlorine of chloroform', pad: 16}, 62);
+    const cl3 = sprout(c, 115, {id: 'cl3', label: 'Cl', element: 'Cl', name: 'a chlorine of chloroform', pad: 16}, 64);
     const oB = A('oB', [360, 170], {label: 'tBuO⁻', element: 'O', name: 'tert-butoxide oxygen', pad: 18});
     const prep = {atoms: [h, c, cl1, cl2, cl3, oB], bonds: [['hC', 'cCl', 1], ['cCl', 'cl1', 1], ['cCl', 'cl2', 1], ['cCl', 'cl3', 1]]};
     const carbene = A('cCar', [540, 200], {name: 'dichlorocarbene carbon'});
@@ -635,14 +642,16 @@ function buildMechanisms() {
       'The product is the dichlorocyclopropane.',
       {prep, add, product},
       [
-        step('prep', 'Dichlorocarbene formation', [
-          lone('hC', 'oB'),
-          leave('cl3', 'cCl', 'cl3')
-        ]),
-        step('add', 'Cyclopropanation', [
-          leave('cCar', 'c2', 'c3'),
-          lone('c3', 'cCar')
-        ])
+        step('prep', 'Dichlorocarbene formation',
+          ['cl3', 'cl2', 'cl1'].map(chloride => ({arrows: [
+            lone('hC', 'oB'),
+            leave(chloride, 'cCl', chloride)
+          ]}))),
+        step('add', 'Cyclopropanation',
+          ['c3', 'c2'].map(carbon => ({arrows: [
+            leave('cCar', 'c2', 'c3'),
+            lone(carbon, 'cCar')
+          ]})))
       ], {substrate: alk}));
   }
 
@@ -801,23 +810,25 @@ function buildMechanisms() {
       'The product is the tetrabromide.',
       {reactants, brom1, dibromo, brom2, product},
       [
-        step('reactants', 'First bromonium ion', [
-          leave('brA', 'c1', 'c2'),
-          leave('brB', 'brA', 'brB'),
-          lone('c2', 'brA')
-        ]),
+        step('reactants', 'First bromonium ion',
+          ['c2', 'c1'].map(carbon => ({arrows: [
+            leave('brA', 'c1', 'c2'),
+            leave('brB', 'brA', 'brB'),
+            lone(carbon, 'brA')
+          ]}))),
         step('brom1', 'First ring opening', [
-          lone('c1', 'brB'),
-          leave('brA', 'c1', 'brA')
+          {arrows: [lone('c1', 'brB'), leave('brA', 'c1', 'brA')]},
+          {arrows: [lone('c2', 'brB'), leave('brA', 'c2', 'brA')]}
         ]),
-        step('dibromo', 'Second bromonium ion', [
-          leave('brC', 'c1', 'c2'),
-          leave('brD', 'brC', 'brD'),
-          lone('c2', 'brC')
-        ]),
+        step('dibromo', 'Second bromonium ion',
+          ['c2', 'c1'].map(carbon => ({arrows: [
+            leave('brC', 'c1', 'c2'),
+            leave('brD', 'brC', 'brD'),
+            lone(carbon, 'brC')
+          ]}))),
         step('brom2', 'Second ring opening', [
-          lone('c1', 'brD'),
-          leave('brC', 'c1', 'brC')
+          {arrows: [lone('c1', 'brD'), leave('brC', 'c1', 'brC')]},
+          {arrows: [lone('c2', 'brD'), leave('brC', 'c2', 'brC')]}
         ])
       ]));
   }
@@ -964,7 +975,7 @@ function buildMechanisms() {
     const p = A('pB', [480, 170], {shorthand: 'PBr₃', label: 'P', element: 'P', name: 'phosphorus', pad: 16});
     const b1 = sprout(p, 70, {id: 'br1', label: 'Br', element: 'Br', name: 'a bromine on phosphorus', pad: 16}, 60);
     const b2 = sprout(p, 10, {id: 'br2', label: 'Br', element: 'Br', name: 'a bromine on phosphorus', pad: 16}, 60);
-    const b3 = sprout(p, -55, {id: 'br3', label: 'Br', element: 'Br', name: 'the bromine that leaves', pad: 16}, 60);
+    const b3 = sprout(p, -55, {id: 'br3', label: 'Br', element: 'Br', name: 'a bromine on phosphorus', pad: 16}, 60);
     const reactants = join(alcohol, {atoms: [p, b1, b2, b3], bonds: [['pB', 'br1', 1], ['pB', 'br2', 1], ['pB', 'br3', 1]]});
     const chain = zz([
       {id: 'c1', label: 'H₃C', name: 'methyl carbon', pad: 22},
@@ -979,10 +990,11 @@ function buildMechanisms() {
       'The product is the bromoalkane.',
       {reactants, subst, product: primary(180, 230, {id: 'brP', label: 'Br', element: 'Br', name: 'the bromine on carbon', pad: 16})},
       [
-        step('reactants', 'Alcohol activation', [
-          lone('pB', 'oH'),
-          leave('br3', 'pB', 'br3')
-        ]),
+        step('reactants', 'Alcohol activation',
+          ['br3', 'br2', 'br1'].map(bromide => ({arrows: [
+            lone('pB', 'oH'),
+            leave(bromide, 'pB', bromide)
+          ]}))),
         step('subst', 'Bromide substitution', [
           lone('c3', 'br3'),
           leave('oH', 'c3', 'oH')
@@ -1092,11 +1104,12 @@ function buildMechanisms() {
     const h = sprout(o, 90, {id: 'hO', label: 'H', element: 'H', name: 'alcohol hydrogen'}, 54);
     const ethanolBonds = [['c1', 'c2', 1], ['c2', 'oH', 1]];
     const alcohol = {atoms: [...chain, o, h], bonds: [...ethanolBonds, ['oH', 'hO', 1]]};
-    const hH = A('hH', [500, 180], {shorthand: 'NaH', label: 'H⁻', element: 'H', name: 'hydride from sodium hydride', pad: 18});
-    const reactants = join(alcohol, {atoms: [hH], bonds: [], annotations: [companion('Na⁺')]});
-    const cE1 = A('cE1', [500, 200], {label: 'H₃C', name: 'the methyl of ethyl bromide', pad: 22});
-    const cE2 = A('cE2', P(500, 200, 0, 74), {name: 'the carbon bearing bromine'});
-    const brE = A('brE', P(cE2.x, cE2.y, 0, 70), {label: 'Br', element: 'Br', name: 'bromine', pad: 16});
+    const hH = A('hH', [455, 175], {label: 'H⁻', element: 'H', name: 'hydride from sodium hydride', pad: 18});
+    const na = A('na', [545, 175], {label: 'Na⁺', element: 'Na', name: 'sodium', pad: 20});
+    const reactants = join(alcohol, {atoms: [hH, na], bonds: [['na', 'hH', 1]]});
+    const cE1 = A('cE1', [430, 255], {label: 'H₃C', name: 'the methyl of ethyl bromide', pad: 22});
+    const cE2 = sprout(cE1, 32, {id: 'cE2', name: 'the carbon bearing bromine'}, 74);
+    const brE = sprout(cE2, -28, {id: 'brE', label: 'Br', element: 'Br', name: 'bromine', pad: 16}, 72);
     const alkoxide = {atoms: [...chain, {...o, label: 'O⁻'}, cE1, cE2, brE], bonds: [...ethanolBonds, ['cE1', 'cE2', 1], ['cE2', 'brE', 1]]};
     const ether = zz([
       {id: 'c1', label: 'H₃C', name: 'a methyl carbon', pad: 22},
@@ -1262,11 +1275,12 @@ function buildMechanisms() {
     }
     const both = join(workupProducts(false, false), water(660, 160, 180));
     const afterOne = join(workupProducts(true, false), water(660, 160, 170));
+    const afterAlkoxy = join(workupProducts(false, true), water(660, 160, 170));
     const product = workupProducts(true, true);
     mechanisms.push(mech(37,
-      'Lithium aluminum hydride reduces the ester. The first hydride adds, the alkoxy group leaves, and a second hydride reduces the aldehyde. Water protonates both alkoxides at the end.',
+      'Lithium aluminum hydride reduces the ester. The first hydride adds, the alkoxy group leaves, and a second hydride reduces the aldehyde. Water then protonates the two alkoxides in either order.',
       'The former carbonyl carbon becomes the CH₂ in RCH₂OH. The ester’s alkoxy group gives R′OH.',
-      {reactants, tetra: tetraScene, aldehyde, both, afterOne, product},
+      {reactants, tetra: tetraScene, aldehyde, both, afterOne, afterAlkoxy, product},
       [
         step('reactants', 'First hydride addition', [
           leave('cCO', 'hH', 'mH'),
@@ -1280,8 +1294,13 @@ function buildMechanisms() {
           leave('cCO', 'hH', 'mH'),
           leave('oCO', 'cCO', 'oCO')
         ]),
-        step('both', 'RCH₂OH formation', protonate('oAlk')),
-        step('afterOne', 'R′OH formation', protonate('oR'))
+        step('both', 'First protonation', [
+          ...protonate('oAlk'),
+          ...protonate('oR').map(choice => ({...choice, nextScene: 'afterAlkoxy'}))
+        ]),
+        Object.assign(step('afterOne', 'Second protonation', protonate('oR')), {
+          variants: {afterAlkoxy: protonate('oAlk')}
+        })
       ]));
   }
   {

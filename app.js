@@ -74,7 +74,9 @@ function animateStep() {
     return;
   }
   const view = attempt.view();
-  const plan = makeMorphPlan(mechanismFor(current.id), view.stepNumber - 1, svg.clientWidth < 460, view.arrows);
+  const plan = makeMorphPlan(mechanismFor(current.id), view.stepNumber - 1, svg.clientWidth < 460, view.arrows, {
+    scene: view.sceneKey, next: view.nextSceneKey
+  });
   $('mech-show').textContent = 'Skip animation';
   $('mech-show').disabled = false;
   $('mech-status').textContent = view.status;

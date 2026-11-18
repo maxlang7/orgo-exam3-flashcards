@@ -22,7 +22,6 @@ const mechanismAtomOverrides = {
     2: [['oAdd', 'oH']]
   },
   3: {
-    0: [['hB', 'hAdd']],
     2: [['oPer', 'oAlk'], ['oFar', 'oHO']],
     3: alcoholWorkup
   },
@@ -158,10 +157,47 @@ const mechanismAtomOverrides = {
 };
 
 function mechanismChoiceAtomOverrides(cardId, stepIndex, arrows) {
+  // Cyclopentene bromonium is symmetrical. Attack at either carbon is the same
+  // trans dibromide. The incoming bromide lands on the carbon that was attacked.
+  if (cardId === 5 && stepIndex === 1) {
+    const attacksOtherCarbon = arrows.some(arrow => arrow.to === 'r1' ||
+      (isBondId(arrow.from) && bondAtoms(arrow.from).includes('r1') && arrow.to === 'brA'));
+    return attacksOtherCarbon ? [['brB', 'brD'], ['brA', 'brW']] : [];
+  }
+  // 2-Butyne bromonium ions are symmetrical, so either carbon can be attacked.
+  if (cardId === 15 && stepIndex === 1) {
+    const attacksRight = arrows.some(arrow => arrow.to === 'c2' ||
+      (isBondId(arrow.from) && bondAtoms(arrow.from).includes('c2') && arrow.to === 'brA'));
+    return attacksRight ? [['brB', 'br2'], ['brA', 'br1']] : [];
+  }
+  if (cardId === 15 && stepIndex === 3) {
+    const attacksRight = arrows.some(arrow => arrow.to === 'c2' ||
+      (isBondId(arrow.from) && bondAtoms(arrow.from).includes('c2') && arrow.to === 'brC'));
+    return attacksRight ? [['brD', 'b4'], ['brC', 'b1'], ['br1', 'b2'], ['br2', 'b3']] : [];
+  }
   if (stepIndex !== 0) return [];
   if (cardId === 21) {
     const chloride = arrows.find(arrow => arrow.to === 'cl1' || arrow.to === 'cl2')?.to ?? 'cl2';
     return [[chloride, 'cl2']];
+  }
+  // Any borane hydrogen can transfer. The next picture has one explicit H,
+  // so the hydrogen that moved has to claim hAdd. A static hB map would also
+  // claim it and the two hydrogens would collide.
+  if (cardId === 3) {
+    const hydride = ['hB', 'hB2', 'hB3'].find(id =>
+      arrows.some(arrow => arrow.from === bondId(id, 'bN'))) ?? 'hB';
+    return [[hydride, 'hAdd']];
+  }
+  // Any PBr3 bromine can leave. The substitution picture shows that bromide as br3.
+  // Reserving br3 stops the bromine that stayed on phosphorus from keeping the same id.
+  if (cardId === 22) {
+    const bromide = ['br1', 'br2', 'br3'].find(id => arrows.some(arrow => arrow.to === id)) ?? 'br3';
+    return [[bromide, 'br3']];
+  }
+  // The carbene is drawn with cl1 and cl2. If another chlorine leaves, cl3 fills that slot.
+  if (cardId === 11) {
+    const leaving = ['cl1', 'cl2', 'cl3'].find(id => arrows.some(arrow => arrow.to === id)) ?? 'cl3';
+    return leaving === 'cl3' ? [] : [['cl3', leaving]];
   }
   if (cardId !== 8) return [];
 

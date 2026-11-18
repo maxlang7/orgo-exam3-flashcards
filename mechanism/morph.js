@@ -1,8 +1,8 @@
 // Match atoms before laying out the motion. A scene may rename atoms or reuse IDs for fresh reagents.
-function makeMorphPlan(mechanism, index, compact, arrows) {
+function makeMorphPlan(mechanism, index, compact, arrows, shown = {}) {
   const step = mechanism.steps[index];
-  const before = mechanism.scenes[step.scene];
-  const after = mechanism.scenes[mechanism.steps[index + 1]?.scene ?? mechanism.doneScene];
+  const before = mechanism.scenes[shown.scene || step.scene];
+  const after = mechanism.scenes[shown.next || mechanism.steps[index + 1]?.scene || mechanism.doneScene];
   const mapped = transitionAtoms(mechanism.cardId, index, before, after, arrows);
   const source = layoutScene(before, compact), target = layoutScene(after, compact);
   const reverse = new Map([...mapped].map(([a,b]) => [b,a]));

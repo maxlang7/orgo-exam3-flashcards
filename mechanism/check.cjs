@@ -17,6 +17,11 @@ const routes = vm.runInContext('reagentRoutes', context);
 let scenes = 0;
 for (const mechanism of catalog) {
   assert(mechanism.steps.every(step => step.title?.trim()), 'Each stage needs a visible name');
+  for (const step of mechanism.steps) {
+    const count = step.choices[0].arrows.length;
+    assert(step.choices.every(choice => choice.arrows.length === count),
+      mechanism.cardId + ' ' + step.scene + ' choices differ in arrow count');
+  }
   const conditions = mechanism.overview.conditions ?? routes.get(mechanism.cardId)[0];
   assert(cards.some(card => card.id === mechanism.cardId) && conditions[0]);
   const fragments = [];
@@ -160,6 +165,42 @@ for (const key of ['both', 'afterOne', 'product']) {
   assert.equal(context.atomById(scene, 'oAlk').label, key === 'both' ? 'O⁻' : 'OH');
   assert.equal(context.atomById(scene, 'oR').label, key === 'product' ? 'OH' : 'O⁻');
 }
+{
+  const scene = esterReduction.scenes.afterAlkoxy;
+  assert.equal(context.atomById(scene, 'cCO').label, 'CH₂');
+  assert.equal(context.atomById(scene, 'oAlk').label, 'O⁻');
+  assert.equal(context.atomById(scene, 'oR').label, 'OH');
+}
+for (const hydrogen of ['h1', 'h2']) {
+  const attempt = context.createAttempt(esterReduction);
+  for (let i = 0; i < 3; i++) { attempt.reveal(); attempt.advance(); }
+  attempt.click('oR');
+  attempt.click(hydrogen);
+  attempt.click(context.bondId(hydrogen, 'oW'));
+  attempt.click('oW');
+  assert.equal(attempt.check(), 'correct', 'Either ester alkoxide can be protonated first');
+  const plan = context.makeMorphPlan(esterReduction, 3, false, attempt.view().arrows, {
+    scene: attempt.view().sceneKey, next: attempt.view().nextSceneKey
+  });
+  assert.equal(plan.absorbed.get(hydrogen), 'oR');
+  assert.equal(plan.mapped.size, new Set(plan.mapped.values()).size);
+  attempt.advance();
+  assert.equal(attempt.view().sceneKey, 'afterAlkoxy');
+  assert.equal(context.atomById(attempt.view().scene, 'oR').label, 'OH');
+  assert.equal(context.atomById(attempt.view().scene, 'oAlk').label, 'O⁻');
+  const other = hydrogen === 'h1' ? 'h2' : 'h1';
+  attempt.click('oAlk');
+  attempt.click(other);
+  attempt.click(context.bondId(other, 'oW'));
+  attempt.click('oW');
+  assert.equal(attempt.check(), 'correct', 'The remaining ester alkoxide is protonated second');
+  const finish = context.makeMorphPlan(esterReduction, 4, false, attempt.view().arrows, {
+    scene: attempt.view().sceneKey, next: attempt.view().nextSceneKey
+  });
+  assert.equal(finish.absorbed.get(other), 'oAlk');
+  attempt.advance();
+  assert(attempt.view().finished);
+}
 for (const [id, scene] of [[37,'tetra'], [42,'tetra'], [43,'mono']]) {
   const step = context.mechanismFor(id).steps.find(s => s.scene === scene);
   assert(step.choices[0].arrows.some(a => a.to === 'bond:cC|oAlk' && a.sources[0].from === 'oAlk'));
@@ -173,6 +214,134 @@ for (const bonded of ['cl1', 'cl2']) {
     attempt.click('sC');
     assert.equal(attempt.check(), bonded === destination ? 'correct' : 'incorrect');
   }
+}
+for (const carbon of ['r0', 'r1']) {
+  const attempt = context.createAttempt(context.mechanismFor(5));
+  attempt.reveal();
+  attempt.advance();
+  attempt.click('brB');
+  attempt.click(carbon);
+  attempt.click(context.bondId(carbon, 'brA'));
+  attempt.click('brA');
+  assert.equal(attempt.check(), 'correct', 'Either bromonium carbon can be attacked');
+  const plan = context.makeMorphPlan(context.mechanismFor(5), 1, false, attempt.view().arrows);
+  assert.equal(plan.mapped.size, new Set(plan.mapped.values()).size);
+  assert.equal(plan.mapped.get('brB'), carbon === 'r0' ? 'brW' : 'brD');
+  assert.equal(plan.mapped.get('brA'), carbon === 'r0' ? 'brD' : 'brW');
+}
+for (const [stepIndex, carbon, bromide, bridge, incomingDest, bridgeDest] of [
+  [1, 'c1', 'brB', 'brA', 'br1', 'br2'],
+  [1, 'c2', 'brB', 'brA', 'br2', 'br1'],
+  [3, 'c1', 'brD', 'brC', 'b2', 'b3'],
+  [3, 'c2', 'brD', 'brC', 'b4', 'b1']
+]) {
+  const attempt = context.createAttempt(context.mechanismFor(15));
+  for (let i = 0; i < stepIndex; i++) { attempt.reveal(); attempt.advance(); }
+  attempt.click(bromide);
+  attempt.click(carbon);
+  attempt.click(context.bondId(carbon, bridge));
+  attempt.click(bridge);
+  assert.equal(attempt.check(), 'correct', 'Either 2-butyne bromonium carbon can be attacked');
+  const plan = context.makeMorphPlan(context.mechanismFor(15), stepIndex, false, attempt.view().arrows);
+  assert.equal(plan.mapped.size, new Set(plan.mapped.values()).size);
+  assert.equal(plan.mapped.get(bromide), incomingDest);
+  assert.equal(plan.mapped.get(bridge), bridgeDest);
+}
+
+function acceptChoice(cardId, stepIndex, choiceIndex, expected = []) {
+  const mechanism = context.mechanismFor(cardId);
+  const attempt = context.createAttempt(mechanism);
+  for (let i = 0; i < stepIndex; i++) { attempt.reveal(); attempt.advance(); }
+  for (const arrow of mechanism.steps[stepIndex].choices[choiceIndex].arrows) {
+    attempt.click(arrow.sources[0].from);
+    attempt.click(arrow.to);
+  }
+  assert.equal(attempt.check(), 'correct', `Card ${cardId} step ${stepIndex} choice ${choiceIndex}`);
+  const plan = context.makeMorphPlan(mechanism, stepIndex, false, attempt.view().arrows);
+  assert.equal(plan.mapped.size, new Set(plan.mapped.values()).size,
+    `Card ${cardId} step ${stepIndex} choice ${choiceIndex} morph`);
+  for (const [from, to] of plan.mapped) {
+    assert.equal(context.atomById(plan.source, from).element, context.atomById(plan.target, to).element);
+  }
+  for (const [from, to] of expected) assert.equal(plan.mapped.get(from), to, `${from} to ${to}`);
+  return plan;
+}
+for (const [cardId, stepIndex, count] of [
+  [5, 0, 2], [6, 0, 2], [15, 0, 2], [15, 2, 2],
+  [7, 0, 2], [9, 0, 2], [10, 0, 2], [11, 1, 2],
+  [2, 0, 4], [3, 0, 3], [11, 0, 3], [22, 0, 3]
+]) {
+  const step = context.mechanismFor(cardId).steps[stepIndex];
+  assert.equal(step.choices.length, count, `Card ${cardId} step ${stepIndex} choice count`);
+  for (let i = 0; i < count; i++) acceptChoice(cardId, stepIndex, i);
+}
+const hydroH = acceptChoice(3, 0, 1, [['hB2', 'hAdd']]);
+assert.equal(hydroH.mapped.get('hB'), undefined);
+assert.equal(hydroH.mapped.get('hB3'), undefined);
+acceptChoice(3, 0, 0, [['hB', 'hAdd']]);
+acceptChoice(3, 0, 2, [['hB3', 'hAdd']]);
+for (const choice of context.mechanismFor(3).steps[0].choices) {
+  assert(choice.arrows.some(arrow => arrow.to === 'bN' && arrow.sources[0].from === context.bondId('c2', 'c3')));
+  assert(choice.arrows.some(arrow => arrow.to === 'c2'));
+  assert(!choice.arrows.some(arrow => arrow.to === 'c3'));
+}
+const br2Leaves = acceptChoice(22, 0, 1, [['br2', 'br3']]);
+assert.equal(br2Leaves.mapped.get('br1'), undefined);
+assert.equal(br2Leaves.mapped.get('br3'), undefined);
+const br1Leaves = acceptChoice(22, 0, 2, [['br1', 'br3']]);
+assert.equal(br1Leaves.mapped.get('br3'), undefined);
+const cl3Leaves = acceptChoice(11, 0, 0);
+assert.equal(cl3Leaves.mapped.get('cl1'), 'cl1');
+assert.equal(cl3Leaves.mapped.get('cl2'), 'cl2');
+assert.equal(cl3Leaves.mapped.get('cl3'), undefined);
+const cl2Leaves = acceptChoice(11, 0, 1, [['cl3', 'cl2']]);
+assert.equal(cl2Leaves.mapped.get('cl1'), 'cl1');
+assert.equal(cl2Leaves.mapped.get('cl2'), undefined);
+const cl1Leaves = acceptChoice(11, 0, 2, [['cl3', 'cl1']]);
+assert.equal(cl1Leaves.mapped.get('cl2'), 'cl2');
+assert.equal(cl1Leaves.mapped.get('cl1'), undefined);
+for (const [cardId, stepIndex] of [[1, 0], [1, 1], [4, 0], [4, 1], [6, 1], [2, 1], [9, 1]]) {
+  assert.equal(context.mechanismFor(cardId).steps[stepIndex].choices.length, 1,
+    `Card ${cardId} step ${stepIndex} stays one answer`);
+}
+assert(context.mechanismFor(16).steps.every(step => step.choices.length === 1));
+{
+  const wrongBorane = context.createAttempt(context.mechanismFor(3));
+  wrongBorane.click(context.bondId('c2', 'c3'));
+  wrongBorane.click('bN');
+  wrongBorane.click(context.bondId('hB', 'bN'));
+  wrongBorane.click('c3');
+  assert.equal(wrongBorane.check(), 'incorrect');
+}
+{
+  const halohydrin = context.createAttempt(context.mechanismFor(6));
+  halohydrin.reveal();
+  halohydrin.advance();
+  halohydrin.click('oW');
+  halohydrin.click('c3');
+  halohydrin.click(context.bondId('c3', 'brA'));
+  halohydrin.click('brA');
+  assert.equal(halohydrin.check(), 'incorrect');
+}
+{
+  const mercury = context.createAttempt(context.mechanismFor(2));
+  mercury.reveal();
+  mercury.advance();
+  mercury.click('oW');
+  mercury.click('c3');
+  mercury.click(context.bondId('c3', 'hg'));
+  mercury.click('hg');
+  assert.equal(mercury.check(), 'incorrect');
+}
+{
+  const epoxide = context.createAttempt(context.mechanismFor(9));
+  epoxide.reveal();
+  epoxide.advance();
+  epoxide.click('oHO');
+  epoxide.click('cM');
+  epoxide.click(context.bondId('cM', 'oE'));
+  epoxide.click('oE');
+  assert.equal(epoxide.check(), 'incorrect');
 }
 const osmium = context.mechanismFor(8);
 for (const [key,orders] of [['reactants','2222'],['osmate','1122']]) {
