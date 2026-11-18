@@ -2,9 +2,9 @@
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reaction practice · Orgo III</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="mechanism/drawing.css"></head>
 <body><main>
-<header><div class="eyebrow">09-219 · EXAM III</div><h1>Reaction practice<span>.</span></h1><p>Practice the reactions from your Exam III sheet.</p></header>
-<div class="workbench"><aside class="settings"><h2>Practice settings</h2><section class="practice-options" aria-label="Practice options">
-<label for="practice-mode">Practice<select id="practice-mode"><option value="mixed">Conditions & products</option><option value="reagents">Conditions only</option><option value="product">Products only</option><option value="mechanism">Mechanisms (in development)</option></select></label>
+<header><div class="course-line"><span>09-219</span><span>Organic Chemistry</span></div><div class="masthead"><h1>Reaction practice</h1><span>Exam III</span></div></header>
+<div class="workbench"><aside class="settings"><details id="settings-panel" open><summary>Practice settings</summary><section class="practice-options" aria-label="Practice options">
+<label for="practice-mode">Practice mode<select id="practice-mode"><option value="mixed">Conditions & products</option><option value="reagents">Conditions only</option><option value="product">Products only</option><option value="mechanism">Mechanisms (in development)</option></select></label>
 
 <label for="practice-order">Card selection<select id="practice-order"><option value="adaptive">Prioritize low confidence</option><option value="random">Equal chance for every card</option></select></label>
 </section>
@@ -14,9 +14,9 @@
 <div id="reaction-checklist"></div>
 </details>
 <label id="jump-label" hidden>Study a mechanism<select id="jump-card"></select></label>
-</aside><div class="study-column">
-<p id="empty-selection" class="empty-selection" hidden>Select at least one reaction above to start practicing.</p>
-<div class="toolbar"><span id="progress"></span><button class="quiet" id="reset">Reset progress</button></div>
+</details></aside><div class="study-column">
+<p id="empty-selection" class="empty-selection" hidden>Select at least one reaction in Practice settings.</p>
+<div class="toolbar"><div class="progress-group"><progress id="progress-meter" aria-labelledby="progress" value="0" max="40"></progress><span id="progress"></span></div><button class="quiet" id="reset">Reset progress</button></div>
 <section id="study-card" class="study-card" aria-labelledby="question">
 <div class="card-heading"><span class="pill" id="mode-label"></span><span id="session-count">Practice 01</span></div>
 <h2 id="question"></h2><p class="instruction" id="instruction">Work it out before revealing the answer.</p>
@@ -24,7 +24,7 @@
 <svg id="reaction" viewBox="0 0 745 180" role="img" aria-label="Reaction with a missing component" xmlns="http://www.w3.org/2000/svg">
 <image id="reaction-image" width="745" height="180" href=""/>
 <g id="mask"><rect id="mask-cover" fill="white"/><rect id="mask-box" y="45" height="90" rx="10" fill="#f6f9f4" stroke="#a9bfae" stroke-dasharray="5 5"/><text id="mask-label" y="96" text-anchor="middle" fill="#466b51" font-family="system-ui,sans-serif" font-size="19">?</text></g>
-</svg></div><p class="scroll-hint">Swipe across to see the full reaction.</p>
+</svg></div><button type="button" class="quiet diagram-size" id="reaction-zoom" aria-pressed="false">Enlarge diagram</button>
 <div class="action-area"><button class="primary" id="reveal">Reveal answer <kbd>Space</kbd></button></div></div>
 <div id="mechanism" hidden>
 <p id="mech-companions" hidden></p><p id="mech-status" role="status"></p>
@@ -36,7 +36,7 @@
 </div>
 <div id="solution" hidden><div class="rating-heading"><h3>How confident were you?</h3><span>Rate to continue</span></div><div class="ratings">
 <button data-rating="1"><kbd>1</kbd><strong>25%</strong><span>Needs work</span></button><button data-rating="2"><kbd>2</kbd><strong>50%</strong><span>Getting there</span></button><button data-rating="3"><kbd>3</kbd><strong>75%</strong><span>Almost solid</span></button><button data-rating="4"><kbd>4</kbd><strong>100%</strong><span>Solid</span></button>
-</div><details id="original-notes"><summary>View original reaction & notes</summary><img id="answer" alt="Original reaction sheet entry"></details></div>
+</div><details id="original-notes"><summary>View original reaction &amp; notes</summary><img id="answer" alt="Original reaction sheet entry"></details></div>
 </section>
-<footer><p id="feedback" role="status">Lower confidence brings a reaction back more often.</p><span>Progress saved on this device</span></footer>
+<footer><p id="feedback" role="status"></p><span>Progress saved on this device</span></footer>
 </div></div></main><script src="deck.js"></script><script src="mechanism/layout.js"></script><script src="mechanism/geometry.js"></script><script src="mechanism/render.js"></script><script src="mechanism/catalog.js"></script><script src="mechanisms.js"></script><script src="app.js"></script></body></html>

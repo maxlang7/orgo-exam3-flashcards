@@ -5,7 +5,7 @@
 .bond-select{stroke:transparent;stroke-width:7;stroke-linecap:round;pointer-events:none}
 .bond-hit.is-selected .bond-select{stroke:#285b40;stroke-opacity:.55}
 .bond-hit:hover .bond-select,.bond-hit:focus-visible .bond-select{stroke:#7ea88a;stroke-opacity:.8}
-.atom-label{font-family:system-ui,sans-serif;font-size:18px;font-weight:600;stroke:#fff;stroke-width:6px;paint-order:stroke fill}
+.atom-label{font-family:"DM Sans",system-ui,sans-serif;font-size:18px;font-weight:600;stroke:#fff;stroke-width:6px;paint-order:stroke fill}
 .atom-dot{stroke:#fff;stroke-width:2;paint-order:stroke fill}
 .el-C{fill:#24302b}
 .el-O{fill:#d6453d}
@@ -13,11 +13,11 @@
 .el-Mg{fill:#0f8a62}
 .el-Br{fill:#b4532a}
 .el-N{fill:#2f62b5}
-.el-S{fill:#c2a033}
-.el-Cl{fill:#1f9d57}
-.el-F{fill:#1f9d57}
+.el-S{fill:#806814}
+.el-Cl{fill:#197640}
+.el-F{fill:#197640}
 .el-P{fill:#d4782a}
-.el-B{fill:#e09a3e}
+.el-B{fill:#99631c}
 .el-Al{fill:#7d8b99}
 .el-Si{fill:#6b7280}
 .el-Hg{fill:#8d7ca8}
@@ -33,5 +33,5 @@
 .mech-arrow{fill:none;stroke-width:1.9;stroke-linecap:round;pointer-events:none}
 .mech-arrow.is-good{stroke:#285b40}
 .mech-arrow.is-draft{stroke:#475569}
-.mech-plus{font-family:system-ui,sans-serif;font-size:26px;fill:#65776c;pointer-events:none}
-.mech-salt{font-family:system-ui,sans-serif;font-size:16px;font-weight:600;fill:#65776c;pointer-events:none}
+.mech-plus{font-family:"DM Sans",system-ui,sans-serif;font-size:26px;fill:#65776c;pointer-events:none}
+.mech-salt{font-family:"DM Sans",system-ui,sans-serif;font-size:16px;font-weight:600;fill:#65776c;pointer-events:none}

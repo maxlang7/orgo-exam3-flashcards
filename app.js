@@ -36,7 +36,10 @@ function practiceDeck() {
 function updateProgress() {
   const pool = practiceDeck();
   const noun = options.mode === 'mechanism' ? 'mechanisms' : 'reactions';
-  $('progress').textContent = `${pool.filter(card => ratings[ratingGroup()][card.id]).length} / ${pool.length} ${noun} rated`;
+  const rated = pool.filter(card => ratings[ratingGroup()][card.id]).length;
+  $('progress-meter').max = Math.max(pool.length, 1);
+  $('progress-meter').value = rated;
+  $('progress').textContent = `${rated} / ${pool.length} ${noun} rated`;
 }
 let current, mode, revealed = false, last = null, count = 0, attempt = null;
 function save() { try { localStorage.setItem(options.mode === 'mechanism' ? mechanismKey : key, JSON.stringify(ratings[ratingGroup()])); } catch {} }
@@ -72,23 +75,26 @@ function next(requestedId) {
   $('empty-selection').hidden = !noSelection && !noMechanism;
   $('empty-selection').textContent = noMechanism
     ? 'None of the selected reactions has a mechanism drawing yet.'
-    : 'Select at least one reaction above to start practicing.';
+    : 'Select at least one reaction in Practice settings.';
   $('study-card').hidden = pool.length === 0;
   if (!pool.length) { current = null; return; }
   current = pool.find(card => card.id === requestedId) || choose(); last = current.id; count++;
   $('jump-card').value = current.id;
   $('original-notes').open = false;
   $('answer').src = current.image;
-  $('session-count').textContent = `Practice ${String(count).padStart(2, '0')}`;
+  $('session-count').textContent = `Card ${String(count).padStart(2, '0')}`;
   updateProgress();
   if (options.mode === 'mechanism') { startMechanism(); return; }
   attempt = null;
   $('mechanism').hidden = true;
   $('practice-content').hidden = false;
   mode = options.mode === 'mixed' ? (Math.random() < .5 ? 'reagents' : 'product') : options.mode;
-  $('mode-label').textContent = mode === 'reagents' ? 'Recall the conditions' : 'Predict the product';
+  $('mode-label').textContent = mode === 'reagents' ? 'Conditions' : 'Product recall';
   $('question').textContent = mode === 'reagents' ? 'What reagents and conditions are needed?' : 'What product forms?';
-  $('instruction').textContent = 'Work it out before revealing the answer.';
+  $('instruction').textContent = '';
+  $('practice-content').classList.remove('zoomed');
+  $('reaction-zoom').textContent = 'Enlarge diagram';
+  $('reaction-zoom').setAttribute('aria-pressed', 'false');
   $('solution').hidden = true; $('reveal').hidden = false;
   drawReaction();
   updateVisibility();
@@ -145,7 +151,7 @@ function reveal() {
 function rate(rating) {
   if (!current || !revealed || ![1, 2, 3, 4].includes(rating)) return;
   ratings[ratingGroup()][current.id] = rating; save();
-  $('feedback').textContent = `Saved · ${rating * 25}% confidence. ${options.order === 'random' ? 'Continuing with equal card selection.' : rating < 3 ? 'You’ll see that reaction more often.' : rating === 4 ? 'That reaction will appear less often.' : 'Keep practicing to make it stick.'}`;
+  $('feedback').textContent = `Saved · ${rating * 25}% confidence`;
   next();
 }
 $('reveal').onclick = reveal;
@@ -261,9 +267,18 @@ document.addEventListener('keydown', event => {
     if (revealed && /^[1-4]$/.test(event.key)) { event.preventDefault(); rate(Number(event.key)); }
     return;
   }
-  if (event.code === 'Space' && event.target.tagName !== 'SUMMARY') { event.preventDefault(); reveal(); }
+  if (event.code === 'Space' && !['BUTTON', 'SUMMARY'].includes(event.target.tagName)) { event.preventDefault(); reveal(); }
   else if (/^[1-4]$/.test(event.key)) { event.preventDefault(); rate(Number(event.key)); }
 });
+const narrowLayout = window.matchMedia('(max-width: 800px)');
+function sizeSettingsPanel() { $('settings-panel').open = !narrowLayout.matches; }
+sizeSettingsPanel();
+narrowLayout.addEventListener('change', sizeSettingsPanel);
+$('reaction-zoom').onclick = () => {
+  const enlarged = $('practice-content').classList.toggle('zoomed');
+  $('reaction-zoom').setAttribute('aria-pressed', String(enlarged));
+  $('reaction-zoom').textContent = enlarged ? 'Fit diagram' : 'Enlarge diagram';
+};
 selectionChanged();
 
 window.matchMedia('(max-width: 600px)').addEventListener('change', () => { if (attempt && current) paintMechanism(); });
