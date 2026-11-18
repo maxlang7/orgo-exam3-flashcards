@@ -65,7 +65,7 @@ function next() {
   const noMechanism = options.mode === 'mechanism' && !noSelection && pool.length === 0;
   $('empty-selection').hidden = !noSelection && !noMechanism;
   $('empty-selection').textContent = noMechanism
-    ? 'Grignard plus ketone is the only mechanism so far. Select it above to practice the arrows.'
+    ? 'None of the selected reactions has a mechanism drawing yet.'
     : 'Select at least one reaction above to start practicing.';
   $('study-card').hidden = pool.length === 0;
   if (!pool.length) { current = null; return; }
