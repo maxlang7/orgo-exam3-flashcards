@@ -97,6 +97,7 @@ function startMechanism() {
 }
 function paintMechanism() {
   const view = attempt.view();
+  renderMechanism($('mech-svg'), view);
   $('instruction').textContent = view.prompt;
   $('mech-source').textContent = view.source;
   $('mech-status').textContent = view.status;
@@ -106,7 +107,6 @@ function paintMechanism() {
   $('mech-show').textContent = view.peeked ? 'Continue' : 'Show this step';
   $('solution').hidden = !view.finished;
   if (view.finished) revealed = true;
-  renderMechanism($('mech-svg'), view);
 }
 function scheduleAdvance() {
   const token = ++advanceToken;
@@ -194,7 +194,6 @@ for (const [topic, name] of Object.entries(groupNames)) {
 }
 $('select-all').onclick = () => { selected = new Set(deck.map(card => card.id)); selectionChanged(); };
 $('clear-all').onclick = () => { selected.clear(); selectionChanged(); };
-selectionChanged();
 $('mech-svg').addEventListener('click', event => {
   const atom = event.target.closest('.atom');
   if (atom) onMechanismAtom(atom.dataset.id);
@@ -232,3 +231,4 @@ document.addEventListener('keydown', event => {
   if (event.code === 'Space' && event.target.tagName !== 'SUMMARY') { event.preventDefault(); reveal(); }
   else if (/^[1-4]$/.test(event.key)) { event.preventDefault(); rate(Number(event.key)); }
 });
+selectionChanged();
