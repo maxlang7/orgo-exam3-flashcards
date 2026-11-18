@@ -37,3 +37,14 @@
 .mech-salt{font-family:"DM Sans",system-ui,sans-serif;font-size:16px;font-weight:600;fill:#65776c;pointer-events:none}
 
 .mech-caption{font:600 15px "DM Sans",system-ui,sans-serif;fill:#405f54;pointer-events:none}
+
+@media (prefers-reduced-motion: no-preference) {
+  #mech-svg .shake { animation: mechanism-shake 320ms ease-in-out; }
+}
+@keyframes mechanism-shake {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-7px); }
+  38% { transform: translateX(6px); }
+  58% { transform: translateX(-4px); }
+  78% { transform: translateX(2px); }
+}

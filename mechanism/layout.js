@@ -56,19 +56,22 @@ function layoutScene(source, compact) {
   const gap = 64;
   const stack = compact && groups.reduce((sum,g) => sum + g.width, gap*(groups.length-1)) > 440;
   const cross = Math.max(...groups.map(g => stack ? g.width : g.height));
-  const atoms = [], texts = [];
+  const atoms = [], texts = [], molecules = [];
   let offset = 0;
   for (const group of groups) {
     const x = stack ? (cross-group.width)/2 : offset;
     const y = stack ? offset : (cross-group.height)/2;
-    for (const atom of group.atoms) atoms.push({...atom, x: atom.x-group.left+x, y: atom.y-group.top+y});
-    if (group.caption) texts.push({
+    const placed = group.atoms.map(atom => ({...atom, x: atom.x-group.left+x, y: atom.y-group.top+y}));
+    atoms.push(...placed);
+    const caption = group.caption && {
       className:'mech-caption', text:group.caption, x:x+group.width/2, y:y+group.height-5
-    });
+    };
+    if (caption) texts.push(caption);
+    molecules.push({atoms:placed, caption, cx:x+group.width/2, cy:y+group.height/2});
     offset += (stack ? group.height : group.width) + gap;
     if (group !== groups.at(-1)) texts.push({className:'mech-plus', text:'+', x:stack ? cross/2 : offset-gap/2, y:(stack ? offset-gap/2 : cross/2)+6});
   }
   const width = stack ? cross : offset-gap;
   const height = stack ? offset-gap : cross;
-  return {atoms, bonds:source.bonds, texts, viewBox:`-45 -45 ${width+90} ${height+90}`};
+  return {atoms, bonds:source.bonds, texts, molecules, viewBox:`-45 -45 ${width+90} ${height+90}`};
 }

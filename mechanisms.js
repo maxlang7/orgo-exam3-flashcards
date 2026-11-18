@@ -48,8 +48,12 @@ function createAttempt(mech) {
     },
     check() {
       if (phase !== 'drawing' || pending !== null || !drawing.length) return;
-      if (step().choices.some(choice => matchesDrawing(choice, drawing))) phase = 'solved';
-      else missed = true;
+      if (step().choices.some(choice => matchesDrawing(choice, drawing))) {
+        phase = 'solved';
+        return 'correct';
+      }
+      missed = true;
+      return 'incorrect';
     },
     reveal() {
       if (phase !== 'drawing') return;

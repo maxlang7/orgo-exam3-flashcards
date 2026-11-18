@@ -59,7 +59,15 @@ for (const mechanism of catalog) {
       assert(!/\b(?:NaN|Infinity)\b/.test(svg));
       assert.equal((svg.match(/class="mech-arrow /g) || []).length, view.arrowCount);
     }
-    attempt.check();
+    const outcome = attempt.check();
+    if (view.arrowCount) {
+      assert.equal(outcome, 'correct');
+      const layout = context.layoutScene(view.scene, false);
+      const animated = context.mechanismInner(layout, {...attempt.view(), motion:outcome});
+      assert(animated.includes('<animateTransform'));
+      assert.equal((animated.match(/<animate attributeName="d"/g) || []).length, view.arrowCount);
+      assert(!/\b(?:NaN|Infinity)\b/.test(animated));
+    } else assert.equal(outcome, undefined);
     assert(attempt.view().stepComplete);
     attempt.advance();
   }
@@ -78,7 +86,7 @@ const edit = context.createAttempt(context.mechanismFor(41));
 edit.click('bond:cAlpha|mg'); edit.click('cCO');
 edit.click('cCO'); edit.click('oCO');
 assert.equal(edit.view().status, '');
-edit.check();
+assert.equal(edit.check(), 'incorrect');
 assert(edit.view().bad);
 assert.equal(edit.view().arrows.length, 2);
 edit.click('oCO'); edit.undo();

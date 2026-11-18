@@ -111,9 +111,9 @@ function startMechanism() {
   $('question').textContent = current.name;
   paintMechanism();
 }
-function paintMechanism() {
+function paintMechanism(outcome) {
   const view = attempt.view();
-  renderMechanism($('mech-svg'), view);
+  renderMechanism($('mech-svg'), view, outcome);
   $('instruction').textContent = view.prompt;
   $('mech-step').textContent = view.finished ? 'Product' : `Step ${view.stepNumber} of ${view.stepCount}`;
   $('mech-flow').hidden = view.locked;
@@ -249,9 +249,12 @@ $('mech-reveal').onclick = () => {
 };
 $('mech-show').onclick = () => {
   if (!attempt) return;
-  if (attempt.view().locked) attempt.advance();
-  else attempt.check();
-  paintMechanism();
+  if (attempt.view().locked) {
+    attempt.advance();
+    paintMechanism();
+  } else {
+    paintMechanism(attempt.check());
+  }
 };
 document.addEventListener('keydown', event => {
   if (['SELECT', 'INPUT', 'TEXTAREA'].includes(event.target.tagName) || event.target.isContentEditable) return;
