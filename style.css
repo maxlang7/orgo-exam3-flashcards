@@ -87,6 +87,7 @@ progress::-moz-progress-bar { background:var(--green); }
 #reaction, #mech-svg { display:block; width:100%; height:auto; }
 #mask-label { font-family:"DM Sans",system-ui,sans-serif; fill:var(--green); }
 .route-label { font:18px "DM Sans",system-ui,sans-serif; fill:#18241e; }
+.route-name { font:600 12px "DM Sans",system-ui,sans-serif; fill:var(--green); }
 .route-arrow { fill:none; stroke:#18241e; stroke-width:1.4; }
 .route-arrowhead { fill:#18241e; }
 .route-or { font:italic 17px var(--serif); fill:var(--muted); }

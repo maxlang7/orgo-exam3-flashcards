@@ -11,7 +11,7 @@ const reagentRoutes = (() => {
   const pcc = ['PCC', 'CH₂Cl₂'];
   // Use the standard Swern base. The original sheet's pyridine label is retained
   // only in its unchanged source image under "View original reaction & notes".
-  const swern = ['1. DMSO, oxalyl chloride', '2. Et₃N'];
+  const swern = ['1. DMSO, oxalyl chloride', '2. Et₃N', 'Swern oxidation'];
   const coreyKim = ['1. Me₂S, NCS', '2. Et₃N'];
   return new Map([
     [7, [['mCPBA'], ['CH₃CO₃H'], ['PhCO₃H']]],
@@ -69,6 +69,7 @@ function renderReagentRoutes(svg, card, mode, revealed) {
       const top = 14 + index * 106;
       const arrowY = top + 45;
       const route = node('g', {class: 'reagent-route'});
+      if (lines[2]) route.append(node('text', {x: startX, y: arrowY - 37, class: 'route-name'}, lines[2]));
       // The arrow sits between the two reagent lines, matching a reaction scheme.
       route.append(node('text', {x: startX, y: arrowY - 13, class: 'route-label'}, lines[0]));
       route.append(node('path', {d: `M ${startX} ${arrowY} H ${endX}`, class: 'route-arrow'}));
