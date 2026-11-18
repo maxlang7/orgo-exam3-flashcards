@@ -1,26 +1,32 @@
-// Click rule, used for every arrow: the first atom is where the electrons leave,
-// and the second is where they go. A bond-to-atom arrow starts at the atom that
-// loses the bond. This ketone is the Nov 10, 2026 carbonyl notes (ketone + RMgBr,
-// then water). The exam card writes the workup as H3O+; the notes use water.
-// Acetone plus EtMgBr stands in for that generic ketone so the carbon bonded to
-// magnesium is a different atom from the end of the chain.
+// First click is where the electrons leave: a bond or an atom. Second click is the
+// atom they go to. A bond click and the atom that loses that bond count as the
+// same arrow. This ketone is the Nov 10, 2026 carbonyl notes (ketone + RMgBr,
+// then water). The exam card writes the workup as H3O+. The notes use water.
+// Acetone plus EtMgBr stands in for that generic ketone.
+//
+// Angles use standard position, 0° east and 90° north, with y growing downward.
+// The carbonyl carbon is trigonal, 120° apart. C–Mg–Br is linear, and the
+// CH2–CH3 bond sits 109.5° off that line. Water is 104.5°. The alkoxide carbon
+// is tetrahedral: three plain bonds 120° apart, and a solid wedge for the bond
+// coming forward.
 
 const mechanisms = [
   {
     cardId: 41,
-    source: 'Nov 10 notes: a ketone plus RMgBr, then water. Organolithium adds the same way. The exam sheet writes the workup as H₃O⁺.',
+    source: 'Nov 10 notes: a ketone plus RMgBr, then water. ⁺MgBr is the counterion and leaves as HOMgBr. The exam sheet writes the workup as H₃O⁺.',
     doneScene: 'product',
+    doneStatus: 'Every arrow matched. The alcohol is the organic product. HOMgBr is the salt.',
     scenes: {
       reactants: {
         atoms: [
-          {id: 'meL', x: 64, y: 214, label: 'H₃C', pad: 24, name: 'left methyl carbon'},
-          {id: 'cCO', x: 168, y: 214, pad: 0, name: 'carbonyl carbon'},
-          {id: 'oCO', x: 168, y: 128, label: 'O', pad: 16, name: 'carbonyl oxygen'},
-          {id: 'meR', x: 252, y: 292, label: 'H₃C', pad: 24, name: 'right methyl carbon'},
-          {id: 'cAlpha', x: 468, y: 150, pad: 0, name: 'carbon bonded to magnesium'},
-          {id: 'cBeta', x: 548, y: 84, pad: 0, name: 'terminal methyl carbon of the Grignard'},
-          {id: 'mg', x: 560, y: 222, label: 'Mg', pad: 18, name: 'magnesium'},
-          {id: 'br', x: 656, y: 222, label: 'Br', pad: 16, name: 'bromine'}
+          {id: 'meL', x: 119, y: 236, label: 'H₃C', element: 'C', pad: 22, name: 'left methyl carbon'},
+          {id: 'cCO', x: 188, y: 196, element: 'C', pad: 5, name: 'carbonyl carbon'},
+          {id: 'oCO', x: 188, y: 116, label: 'O', element: 'O', pad: 16, name: 'carbonyl oxygen'},
+          {id: 'meR', x: 257, y: 236, label: 'H₃C', element: 'C', pad: 22, name: 'right methyl carbon'},
+          {id: 'cAlpha', x: 508, y: 168, element: 'C', pad: 5, name: 'carbon bonded to magnesium'},
+          {id: 'cBeta', x: 481, y: 243, label: 'H₃C', element: 'C', pad: 22, name: 'terminal methyl carbon of the Grignard'},
+          {id: 'mg', x: 588, y: 168, label: 'Mg', element: 'Mg', pad: 18, name: 'magnesium'},
+          {id: 'br', x: 668, y: 168, label: 'Br', element: 'Br', pad: 16, name: 'bromine'}
         ],
         bonds: [
           ['meL', 'cCO', 1],
@@ -30,48 +36,48 @@ const mechanisms = [
           ['cAlpha', 'mg', 1],
           ['mg', 'br', 1]
         ],
-        texts: [{x: 390, y: 268, text: '+', className: 'mech-plus'}]
+        texts: [{x: 378, y: 206, text: '+', className: 'mech-plus'}]
       },
       alkoxide: {
         atoms: [
-          {id: 'meL', x: 78, y: 156, label: 'H₃C', pad: 24, name: 'left methyl carbon'},
-          {id: 'cC', x: 196, y: 156, pad: 0, name: 'carbon that was the carbonyl carbon'},
-          {id: 'meR', x: 286, y: 236, label: 'H₃C', pad: 24, name: 'right methyl carbon'},
-          {id: 'oAlk', x: 196, y: 70, label: 'O⁻', pad: 18, name: 'alkoxide oxygen'},
-          {id: 'cAlpha', x: 196, y: 248, pad: 0, name: 'carbon that came from the Grignard'},
-          {id: 'cBeta', x: 278, y: 312, pad: 0, name: 'methyl carbon of that ethyl group'},
-          {id: 'h1', x: 520, y: 78, label: 'H', pad: 12, name: 'a hydrogen of water'},
-          {id: 'oW', x: 590, y: 140, label: 'O', pad: 14, name: 'water oxygen'},
-          {id: 'h2', x: 520, y: 202, label: 'H', pad: 12, name: 'the other hydrogen of water'}
+          {id: 'meL', x: 116, y: 241, label: 'H₃C', element: 'C', pad: 22, name: 'left methyl carbon'},
+          {id: 'cC', x: 190, y: 198, element: 'C', pad: 5, name: 'carbon that was the carbonyl carbon'},
+          {id: 'meR', x: 116, y: 155, label: 'H₃C', element: 'C', pad: 30, name: 'methyl carbon coming forward'},
+          {id: 'oAlk', x: 190, y: 112, label: 'O⁻', element: 'O', pad: 18, name: 'alkoxide oxygen'},
+          {id: 'cAlpha', x: 264, y: 241, element: 'C', pad: 5, name: 'carbon that came from the Grignard'},
+          {id: 'cBeta', x: 248, y: 329, label: 'H₃C', element: 'C', pad: 22, name: 'methyl carbon of that ethyl group'},
+          {id: 'h1', x: 592, y: 126, label: 'H', element: 'H', pad: 14, name: 'a hydrogen of water'},
+          {id: 'oW', x: 640, y: 188, label: 'O', element: 'O', pad: 16, name: 'water oxygen'},
+          {id: 'h2', x: 592, y: 250, label: 'H', element: 'H', pad: 14, name: 'the other hydrogen of water'}
         ],
         bonds: [
           ['meL', 'cC', 1],
-          ['cC', 'meR', 1],
           ['cC', 'oAlk', 1],
           ['cC', 'cAlpha', 1],
           ['cAlpha', 'cBeta', 1],
+          ['cC', 'meR', 'wedge'],
           ['h1', 'oW', 1],
           ['oW', 'h2', 1]
         ],
-        texts: [{x: 450, y: 286, text: '⁺MgBr', className: 'mech-salt'}]
+        texts: [{x: 460, y: 400, text: '⁺MgBr', className: 'mech-salt'}]
       },
       product: {
         atoms: [
-          {id: 'meL', x: 78, y: 156, label: 'H₃C', pad: 24, name: 'left methyl carbon'},
-          {id: 'cC', x: 196, y: 156, pad: 0, name: 'tertiary carbon'},
-          {id: 'meR', x: 286, y: 236, label: 'H₃C', pad: 24, name: 'right methyl carbon'},
-          {id: 'oH', x: 196, y: 70, label: 'OH', pad: 18, name: 'alcohol oxygen'},
-          {id: 'cAlpha', x: 196, y: 248, pad: 0, name: 'methylene carbon of the ethyl group'},
-          {id: 'cBeta', x: 278, y: 312, pad: 0, name: 'methyl carbon of the ethyl group'}
+          {id: 'meL', x: 116, y: 241, label: 'H₃C', element: 'C', pad: 22, name: 'left methyl carbon'},
+          {id: 'cC', x: 190, y: 198, element: 'C', pad: 5, name: 'tertiary carbon'},
+          {id: 'meR', x: 116, y: 155, label: 'H₃C', element: 'C', pad: 30, name: 'methyl carbon coming forward'},
+          {id: 'oH', x: 190, y: 112, label: 'OH', element: 'O', pad: 20, name: 'alcohol oxygen'},
+          {id: 'cAlpha', x: 264, y: 241, element: 'C', pad: 5, name: 'methylene carbon of the ethyl group'},
+          {id: 'cBeta', x: 248, y: 329, label: 'H₃C', element: 'C', pad: 22, name: 'methyl carbon of the ethyl group'}
         ],
         bonds: [
           ['meL', 'cC', 1],
-          ['cC', 'meR', 1],
           ['cC', 'oH', 1],
           ['cC', 'cAlpha', 1],
-          ['cAlpha', 'cBeta', 1]
+          ['cAlpha', 'cBeta', 1],
+          ['cC', 'meR', 'wedge']
         ],
-        texts: []
+        texts: [{x: 460, y: 400, text: 'HOMgBr', className: 'mech-salt'}]
       }
     },
     steps: [
@@ -81,26 +87,50 @@ const mechanisms = [
         choices: [
           {
             arrows: [
-              {from: 'cAlpha', to: 'cCO', bend: 22},
-              {from: 'cCO', to: 'oCO', bend: 32}
+              {
+                to: 'cCO',
+                sources: [
+                  {from: 'bond:cAlpha|mg', bend: 78},
+                  {from: 'cAlpha', bend: 64}
+                ]
+              },
+              {
+                to: 'oCO',
+                sources: [
+                  {from: 'bond:cCO|oCO', bend: -42},
+                  {from: 'cCO', bend: -46}
+                ]
+              }
             ]
           }
         ]
       },
       {
         scene: 'alkoxide',
-        open: 'The alkoxide has formed. This step takes 2 arrows.',
+        open: 'The alkoxide has formed. ⁺MgBr is the counterion. This step takes 2 arrows.',
         choices: [
           {
             arrows: [
-              {from: 'oAlk', to: 'h1', bend: -42},
-              {from: 'h1', to: 'oW', bend: 26}
+              {to: 'h1', sources: [{from: 'oAlk', bend: -28}]},
+              {
+                to: 'oW',
+                sources: [
+                  {from: 'bond:h1|oW', bend: -30},
+                  {from: 'h1', bend: -24}
+                ]
+              }
             ]
           },
           {
             arrows: [
-              {from: 'oAlk', to: 'h2', bend: 42},
-              {from: 'h2', to: 'oW', bend: -26}
+              {to: 'h2', sources: [{from: 'oAlk', bend: 36}]},
+              {
+                to: 'oW',
+                sources: [
+                  {from: 'bond:h2|oW', bend: 30},
+                  {from: 'h2', bend: 24}
+                ]
+              }
             ]
           }
         ]
@@ -121,25 +151,111 @@ function atomById(scene, id) {
   return scene.atoms.find(atom => atom.id === id);
 }
 
-function bondSegment(scene, fromId, toId, order) {
+function bondId(a, b) {
+  return `bond:${[a, b].sort().join('|')}`;
+}
+
+function isBondId(id) {
+  return typeof id === 'string' && id.startsWith('bond:');
+}
+
+function bondAtoms(id) {
+  return id.slice(5).split('|');
+}
+
+function knownTarget(scene, id) {
+  if (atomById(scene, id)) return true;
+  if (!isBondId(id)) return false;
+  return scene.bonds.some(([from, to]) => bondId(from, to) === id);
+}
+
+function hitRadius(atom) {
+  if (!atom.label) return 15;
+  const size = [...atom.label].length;
+  if (size >= 3) return 24;
+  if (size === 2) return 20;
+  return 16;
+}
+
+function bondEnds(scene, fromId, toId) {
   const a = atomById(scene, fromId);
   const b = atomById(scene, toId);
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len = Math.hypot(dx, dy) || 1;
-  const x1 = a.x + dx / len * (a.pad || 0);
-  const y1 = a.y + dy / len * (a.pad || 0);
-  const x2 = b.x - dx / len * (b.pad || 0);
-  const y2 = b.y - dy / len * (b.pad || 0);
-  if (order === 1) return [[x1, y1, x2, y2]];
-  const ox = -dy / len * 3.5;
-  const oy = dx / len * 3.5;
+  return {a, b, dx, dy, len, ux: dx / len, uy: dy / len};
+}
+
+function bondSegment(scene, fromId, toId, order) {
+  const {a, b, len, ux, uy} = bondEnds(scene, fromId, toId);
+  const x1 = a.x + ux * (a.pad || 0);
+  const y1 = a.y + uy * (a.pad || 0);
+  const x2 = b.x - ux * (b.pad || 0);
+  const y2 = b.y - uy * (b.pad || 0);
+  if (order !== 2) return [[x1, y1, x2, y2]];
+  const ox = -uy * 3.6;
+  const oy = ux * 3.6;
   return [[x1 + ox, y1 + oy, x2 + ox, y2 + oy], [x1 - ox, y1 - oy, x2 - ox, y2 - oy]];
 }
 
+function wedgePoints(scene, fromId, toId) {
+  const {a, b, len, ux, uy} = bondEnds(scene, fromId, toId);
+  const px = -uy;
+  const py = ux;
+  const start = (a.pad || 0) + 1;
+  const end = len - (b.pad || 0);
+  const half = 5.5;
+  const x0 = a.x + ux * start;
+  const y0 = a.y + uy * start;
+  const x1 = a.x + ux * end;
+  const y1 = a.y + uy * end;
+  return [[x0, y0], [x1 + px * half, y1 + py * half], [x1 - px * half, y1 - py * half]]
+    .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+}
+
+function pointOf(scene, id) {
+  if (isBondId(id)) {
+    const [a, b] = bondAtoms(id);
+    const A = atomById(scene, a);
+    const B = atomById(scene, b);
+    if (!A || !B) return null;
+    return {x: (A.x + B.x) / 2, y: (A.y + B.y) / 2, gap: 2};
+  }
+  const atom = atomById(scene, id);
+  if (!atom) return null;
+  return {x: atom.x, y: atom.y, gap: atom.label ? 18 : 14};
+}
+
+function collapseArrow(scene, fromId, toId, bend) {
+  const [left, right] = bondAtoms(fromId);
+  if (toId !== left && toId !== right) return null;
+  const far = atomById(scene, toId === left ? right : left);
+  const near = atomById(scene, toId);
+  const lx = near.x - far.x;
+  const ly = near.y - far.y;
+  const llen = Math.hypot(lx, ly) || 1;
+  const ux = lx / llen;
+  const uy = ly / llen;
+  const px = -uy;
+  const py = ux;
+  const off = 16 * Math.sign(bend || 1);
+  const start = (far.pad || 8) + 16;
+  const end = llen - (near.pad || 16);
+  const x1 = far.x + ux * start + px * off;
+  const y1 = far.y + uy * start + py * off;
+  const x2 = far.x + ux * end + px * off * 0.8;
+  const y2 = far.y + uy * end + py * off * 0.8;
+  const cx = (x1 + x2) / 2 + px * off * 0.25;
+  const cy = (y1 + y2) / 2 + py * off * 0.25;
+  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+}
+
 function arrowPath(scene, fromId, toId, bend) {
-  const a = atomById(scene, fromId);
-  const b = atomById(scene, toId);
+  const alongBond = isBondId(fromId) && collapseArrow(scene, fromId, toId, bend);
+  if (alongBond) return alongBond;
+  const a = pointOf(scene, fromId);
+  const b = pointOf(scene, toId);
+  if (!a || !b) return '';
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len = Math.hypot(dx, dy) || 1;
@@ -147,21 +263,37 @@ function arrowPath(scene, fromId, toId, bend) {
   const my = (a.y + b.y) / 2;
   const cx = mx + -dy / len * bend;
   const cy = my + dx / len * bend;
-  const end = (atom, gap) => {
-    const vx = cx - atom.x;
-    const vy = cy - atom.y;
+  const end = (point, gap) => {
+    const vx = cx - point.x;
+    const vy = cy - point.y;
     const vlen = Math.hypot(vx, vy) || 1;
-    return [atom.x + vx / vlen * gap, atom.y + vy / vlen * gap];
+    return [point.x + vx / vlen * gap, point.y + vy / vlen * gap];
   };
-  const [x1, y1] = end(a, 16);
-  const [x2, y2] = end(b, 18);
+  const [x1, y1] = end(a, a.gap);
+  const [x2, y2] = end(b, b.gap + 2);
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
 function mechanismInner(scene, state) {
   const arrows = state.arrows || [];
-  const bonds = scene.bonds.map(([from, to, order]) => bondSegment(scene, from, to, order).map(([x1, y1, x2, y2]) =>
-    `<line class="bond" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`).join('')).join('');
+  const bonds = scene.bonds.map(([from, to, kind]) => kind === 'wedge'
+    ? `<polygon class="wedge" points="${wedgePoints(scene, from, to)}"/>`
+    : bondSegment(scene, from, to, kind).map(([x1, y1, x2, y2]) =>
+      `<line class="bond" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`).join('')).join('');
+  const hits = scene.bonds.map(([from, to]) => {
+    const {a, b, len, ux, uy} = bondEnds(scene, from, to);
+    const insetA = hitRadius(a) + 2;
+    const insetB = hitRadius(b) + 2;
+    if (len <= insetA + insetB + 8) return '';
+    const id = bondId(from, to);
+    const selected = state.selectedId === id ? ' is-selected' : '';
+    const x1 = a.x + ux * insetA;
+    const y1 = a.y + uy * insetA;
+    const x2 = b.x - ux * insetB;
+    const y2 = b.y - uy * insetB;
+    const label = `bond between ${atomById(scene, from).name} and ${atomById(scene, to).name}`;
+    return `<g class="bond-hit${selected}" data-id="${id}" tabindex="${state.locked ? -1 : 0}" role="button" aria-label="${escapeXml(label)}"><line class="bond-hit-line" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/><line class="bond-select" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/></g>`;
+  }).join('');
   const notes = (scene.texts || []).map(item =>
     `<text class="${item.className}" x="${item.x}" y="${item.y}" text-anchor="middle">${escapeXml(item.text)}</text>`).join('');
   const paths = arrows.map(arrow => {
@@ -170,44 +302,57 @@ function mechanismInner(scene, state) {
   }).join('');
   const atoms = scene.atoms.map(atom => {
     const selected = state.selectedId === atom.id ? ' is-selected' : '';
+    const element = atom.element || 'C';
+    const radius = hitRadius(atom);
     const body = atom.label
-      ? `<text class="atom-label" x="${atom.x}" y="${atom.y}" text-anchor="middle" dy="0.35em">${escapeXml(atom.label)}</text>`
-      : `<circle class="atom-dot" cx="${atom.x}" cy="${atom.y}" r="3.5"/>`;
-    return `<g class="atom${selected}" data-id="${atom.id}" tabindex="${state.locked ? -1 : 0}" role="button" aria-label="${escapeXml(atom.name)}"><circle class="atom-ring" cx="${atom.x}" cy="${atom.y}" r="16"/>${body}<circle class="atom-hit" cx="${atom.x}" cy="${atom.y}" r="26"/></g>`;
+      ? `<text class="atom-label el-${element}" x="${atom.x}" y="${atom.y}" text-anchor="middle" dy="0.35em">${escapeXml(atom.label)}</text>`
+      : `<circle class="atom-dot el-${element}" cx="${atom.x}" cy="${atom.y}" r="4"/>`;
+    return `<g class="atom${selected}" data-id="${atom.id}" tabindex="${state.locked ? -1 : 0}" role="button" aria-label="${escapeXml(atom.name)}"><circle class="atom-ring" cx="${atom.x}" cy="${atom.y}" r="${radius - 2}"/>${body}<circle class="atom-hit" cx="${atom.x}" cy="${atom.y}" r="${radius}"/></g>`;
   }).join('');
   return `<defs>
 <style>
-.bond{stroke:#25362f;stroke-width:2.05;stroke-linecap:round}
-.atom-label{font-family:system-ui,sans-serif;font-size:18px;font-weight:600;fill:#25362f;stroke:#fff;stroke-width:6px;paint-order:stroke fill}
-.atom-dot{fill:#25362f}
-.atom-hit{fill:transparent}
+.bond{stroke:#24302b;stroke-width:2.15;stroke-linecap:round;pointer-events:none}
+.wedge{fill:#24302b;stroke:#24302b;stroke-width:.6;stroke-linejoin:round;pointer-events:none}
+.bond-hit-line{stroke:transparent;stroke-width:16;stroke-linecap:round;cursor:pointer}
+.bond-select{stroke:transparent;stroke-width:7;stroke-linecap:round;pointer-events:none}
+.bond-hit.is-selected .bond-select{stroke:#285b40;stroke-opacity:.55}
+.bond-hit:hover .bond-select,.bond-hit:focus-visible .bond-select{stroke:#7ea88a;stroke-opacity:.8}
+.atom-label{font-family:system-ui,sans-serif;font-size:18px;font-weight:600;stroke:#fff;stroke-width:6px;paint-order:stroke fill}
+.atom-dot{stroke:#fff;stroke-width:2;paint-order:stroke fill}
+.el-C{fill:#24302b}
+.el-O{fill:#d6453d}
+.el-H{fill:#5c6b73}
+.el-Mg{fill:#0f8a62}
+.el-Br{fill:#b4532a}
+.atom-hit{fill:transparent;cursor:pointer}
 .atom-ring{fill:none;stroke:transparent;stroke-width:2}
+.atom:hover .atom-ring,.atom:focus-visible .atom-ring{stroke:#8eaf96}
 .atom.is-selected .atom-ring{stroke:#285b40}
-.mech-arrow{fill:none;stroke-width:2.4;stroke-linecap:round}
+.mech-arrow{fill:none;stroke-width:2.4;stroke-linecap:round;pointer-events:none}
 .mech-arrow.is-good{stroke:#285b40}
 .mech-arrow.is-bad{stroke:#9c3b3b}
-.mech-plus{font-family:system-ui,sans-serif;font-size:26px;fill:#65776c}
-.mech-salt{font-family:system-ui,sans-serif;font-size:14px;font-weight:600;fill:#65776c}
+.mech-plus{font-family:system-ui,sans-serif;font-size:26px;fill:#65776c;pointer-events:none}
+.mech-salt{font-family:system-ui,sans-serif;font-size:16px;font-weight:600;fill:#65776c;pointer-events:none}
 </style>
 <marker id="arrow-good" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#285b40"/></marker>
 <marker id="arrow-bad" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#9c3b3b"/></marker>
-</defs><g class="${state.locked ? 'is-locked' : ''}">${bonds}${notes}${paths}${atoms}</g>`;
+</defs><g class="${state.locked ? 'is-locked' : ''}">${hits}${bonds}${notes}${paths}${atoms}</g>`;
 }
 
 function renderMechanism(svg, view) {
-  svg.setAttribute('viewBox', '0 0 760 360');
+  svg.setAttribute('viewBox', '0 0 760 440');
   svg.innerHTML = mechanismInner(view.scene, view);
 }
 
-function arrowKey(arrow) {
-  return `${arrow.from}>${arrow.to}`;
+function arrowIdentity(spec) {
+  return `${spec.sources[0].from}>${spec.to}`;
 }
 
 function viableChoices(step, placed) {
-  const used = placed.map(arrowKey);
+  const used = placed.map(arrow => arrow.key);
   const alive = [];
   step.choices.forEach((choice, index) => {
-    const pool = choice.arrows.map(arrowKey);
+    const pool = choice.arrows.map(arrowIdentity);
     const fits = used.every(key => {
       const at = pool.indexOf(key);
       if (at < 0) return false;
@@ -219,17 +364,27 @@ function viableChoices(step, placed) {
   return alive;
 }
 
+function locate(step, from, to) {
+  for (const choice of step.choices) {
+    for (const spec of choice.arrows) {
+      const source = spec.sources.find(item => item.from === from);
+      if (source && spec.to === to) return {key: arrowIdentity(spec), bend: source.bend};
+    }
+  }
+  return null;
+}
+
 function judgeArrow(step, placed, from, to) {
-  const next = placed.concat([{from, to}]);
-  const alive = viableChoices(step, next);
-  if (!alive.length) {
-    const backwards = viableChoices(step, placed).some(index => step.choices[index].arrows.some(arrow =>
-      arrow.from === to && arrow.to === from && !placed.some(item => item.from === arrow.from && item.to === arrow.to)));
+  const found = locate(step, from, to);
+  if (found && placed.some(arrow => arrow.key === found.key)) return {ok: false, duplicate: true};
+  if (!found || !viableChoices(step, placed.concat([{key: found.key}])).length) {
+    const swapped = locate(step, to, from);
+    const backwards = Boolean(swapped && !placed.some(arrow => arrow.key === swapped.key));
     return {ok: false, backwards};
   }
-  const bend = step.choices[alive[0]].arrows.find(arrow => arrow.from === from && arrow.to === to).bend;
-  const done = alive.every(index => step.choices[index].arrows.length === next.length);
-  return {ok: true, bend, done};
+  const next = placed.concat([{key: found.key}]);
+  const done = viableChoices(step, next).every(index => step.choices[index].arrows.length === next.length);
+  return {ok: true, bend: found.bend, key: found.key, done};
 }
 
 function createAttempt(mech) {
@@ -250,40 +405,62 @@ function createAttempt(mech) {
     if (!peeked) return [];
     const alive = viableChoices(step(), placed);
     const spec = step().choices[alive[0] || 0].arrows;
-    return spec.filter(arrow => !placed.some(item => item.from === arrow.from && item.to === arrow.to))
-      .map(arrow => ({from: arrow.from, to: arrow.to, bend: arrow.bend, kind: 'good'}));
+    return spec.filter(arrow => !placed.some(item => item.key === arrowIdentity(arrow)))
+      .map(arrow => ({from: arrow.sources[0].from, to: arrow.to, bend: arrow.sources[0].bend, kind: 'good'}));
   }
 
   return {
     click(id) {
       if (finished || peeked || stepComplete) return {ignored: true, doneStep: false};
-      if (!atomById(scene(), id)) return {ignored: true, doneStep: false};
+      if (!knownTarget(scene(), id)) return {ignored: true, doneStep: false};
       wrong = null;
+      bad = false;
+      if (isBondId(id)) {
+        if (pending === id) {
+          pending = null;
+          status = placed.length ? 'Selection cleared.' : step().open;
+          return {ignored: false, doneStep: false};
+        }
+        if (pending && !isBondId(pending)) {
+          const swapped = locate(step(), id, pending);
+          if (swapped && !placed.some(arrow => arrow.key === swapped.key)) {
+            wrong = {from: pending, to: id, bend: 36, kind: 'bad'};
+            pending = null;
+            bad = true;
+            status = 'Those are backwards. First click the bond or atom the electrons leave.';
+            return {ignored: false, doneStep: false};
+          }
+        }
+        pending = id;
+        status = 'Now click the atom those electrons go to.';
+        return {ignored: false, doneStep: false};
+      }
       if (!pending) {
         pending = id;
-        bad = false;
         status = 'Now click the atom those electrons go to.';
         return {ignored: false, doneStep: false};
       }
       if (pending === id) {
         pending = null;
-        bad = false;
-        status = step().open;
+        status = placed.length ? 'Selection cleared.' : step().open;
         return {ignored: false, doneStep: false};
       }
       const from = pending;
       pending = null;
       const verdict = judgeArrow(step(), placed, from, id);
+      if (verdict.duplicate) {
+        status = 'That arrow is already drawn.';
+        return {ignored: false, doneStep: false};
+      }
       if (!verdict.ok) {
-        wrong = {from, to: id, bend: 42, kind: 'bad'};
+        wrong = {from, to: id, bend: 36, kind: 'bad'};
         bad = true;
         status = verdict.backwards
-          ? 'Those atoms are backwards. The first click is where the electrons leave.'
+          ? 'Those are backwards. First click the bond or atom the electrons leave.'
           : 'That pair does not match this step.';
         return {ignored: false, doneStep: false};
       }
-      placed.push({from, to: id, bend: verdict.bend, kind: 'good'});
-      bad = false;
+      placed.push({from, to: id, bend: verdict.bend, key: verdict.key, kind: 'good'});
       if (verdict.done) {
         stepComplete = true;
         status = 'Those arrows match.';
@@ -361,7 +538,7 @@ function createAttempt(mech) {
         source: mech.source,
         prompt: finished
           ? (anyPeek ? 'Correct arrows were shown before this was finished. Rate it as it went.' : 'Every arrow matched. Rate how confident you were.')
-          : `Step ${stepIndex + 1} of ${mech.steps.length}. Click the atom the electrons leave, then the atom they go to.`
+          : `Step ${stepIndex + 1} of ${mech.steps.length}. Click the bond or atom the electrons leave, then the atom they go to.`
       };
     }
   };
@@ -369,6 +546,6 @@ function createAttempt(mech) {
   function finish() {
     finished = true;
     bad = false;
-    status = anyPeek ? 'Correct arrows were shown before this was finished.' : 'Every arrow matched.';
+    status = anyPeek ? 'Correct arrows were shown before this was finished.' : mech.doneStatus;
   }
 }

@@ -31,19 +31,29 @@
 .mech-tag{margin-left:auto;font-size:10px;letter-spacing:.04em;color:#41694e;background:#edf4ee;border-radius:4px;padding:1px 6px}
 .mech-source{font-size:12px;line-height:1.45;color:#7b877f;margin:8px 0 0}
 #mech-svg{display:block;width:100%;min-width:640px;height:auto;user-select:none}
-#mech-svg .bond{stroke:#25362f;stroke-width:2.05;stroke-linecap:round}
-#mech-svg .atom-label{font:600 18px system-ui,sans-serif;fill:#25362f;stroke:#fff;stroke-width:6px;paint-order:stroke fill}
-#mech-svg .atom-dot{fill:#25362f}
+#mech-svg .bond{stroke:#24302b;stroke-width:2.15;stroke-linecap:round;pointer-events:none}
+#mech-svg .wedge{fill:#24302b;stroke:#24302b;stroke-width:.6;stroke-linejoin:round;pointer-events:none}
+#mech-svg .bond-hit-line{stroke:transparent;stroke-width:16;stroke-linecap:round;cursor:pointer}
+#mech-svg .bond-select{stroke:transparent;stroke-width:7;stroke-linecap:round;pointer-events:none}
+#mech-svg .bond-hit.is-selected .bond-select{stroke:#285b40;stroke-opacity:.55}
+#mech-svg .bond-hit:hover .bond-select,#mech-svg .bond-hit:focus-visible .bond-select{stroke:#7ea88a;stroke-opacity:.8}
+#mech-svg .atom-label{font:600 18px system-ui,sans-serif;stroke:#fff;stroke-width:6px;paint-order:stroke fill}
+#mech-svg .atom-dot{stroke:#fff;stroke-width:2;paint-order:stroke fill}
+#mech-svg .el-C{fill:#24302b}
+#mech-svg .el-O{fill:#d6453d}
+#mech-svg .el-H{fill:#5c6b73}
+#mech-svg .el-Mg{fill:#0f8a62}
+#mech-svg .el-Br{fill:#b4532a}
 #mech-svg .atom-hit{fill:transparent;cursor:pointer}
 #mech-svg .atom-ring{fill:none;stroke:transparent;stroke-width:2}
 #mech-svg .atom:hover .atom-ring,#mech-svg .atom:focus-visible .atom-ring{stroke:#8eaf96}
 #mech-svg .atom.is-selected .atom-ring{stroke:#285b40}
-#mech-svg .mech-arrow{fill:none;stroke-width:2.4;stroke-linecap:round}
+#mech-svg .mech-arrow{fill:none;stroke-width:2.4;stroke-linecap:round;pointer-events:none}
 #mech-svg .mech-arrow.is-good{stroke:#285b40}
 #mech-svg .mech-arrow.is-bad{stroke:#9c3b3b}
-#mech-svg .mech-plus{font:400 26px system-ui,sans-serif;fill:#65776c}
-#mech-svg .mech-salt{font:600 14px system-ui,sans-serif;fill:#65776c}
-#mech-svg .is-locked .atom{pointer-events:none}
+#mech-svg .mech-plus{font:400 26px system-ui,sans-serif;fill:#65776c;pointer-events:none}
+#mech-svg .mech-salt{font:600 16px system-ui,sans-serif;fill:#65776c;pointer-events:none}
+#mech-svg .is-locked .atom,#mech-svg .is-locked .bond-hit{pointer-events:none}
 #mech-status{min-height:1.4em;margin:4px 0 0;font-size:14px;color:#41694e}
 #mech-status.is-bad{color:#8a3030}
 .mech-actions{display:flex;justify-content:center;gap:8px;margin-top:8px}

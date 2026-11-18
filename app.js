@@ -195,15 +195,15 @@ for (const [topic, name] of Object.entries(groupNames)) {
 $('select-all').onclick = () => { selected = new Set(deck.map(card => card.id)); selectionChanged(); };
 $('clear-all').onclick = () => { selected.clear(); selectionChanged(); };
 $('mech-svg').addEventListener('click', event => {
-  const atom = event.target.closest('.atom');
-  if (atom) onMechanismAtom(atom.dataset.id);
+  const target = event.target.closest('.atom, .bond-hit');
+  if (target) onMechanismAtom(target.dataset.id);
 });
 $('mech-svg').addEventListener('keydown', event => {
-  const atom = event.target.closest && event.target.closest('.atom');
-  if (!atom || (event.key !== 'Enter' && event.key !== ' ')) return;
+  const target = event.target.closest && event.target.closest('.atom, .bond-hit');
+  if (!target || (event.key !== 'Enter' && event.key !== ' ')) return;
   event.preventDefault();
   event.stopPropagation();
-  onMechanismAtom(atom.dataset.id);
+  onMechanismAtom(target.dataset.id);
 });
 $('mech-undo').onclick = () => {
   if (!attempt) return;
