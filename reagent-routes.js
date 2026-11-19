@@ -13,9 +13,10 @@ const reagentRoutes = (() => {
   // only in its unchanged source image under "View original reaction & notes".
   const swern = ['1. DMSO, oxalyl chloride', '2. Et₃N', {name: 'Swern oxidation'}];
   const coreyKim = ['1. Me₂S, NCS', '2. Et₃N'];
+  const oxymercuration = ['1. Hg(OAc)₂, THF/H₂O', '2. NaBH₄, NaOH'];
   return new Map([
-    [1, [['cat. H₂SO₄', 'H₂O']]],
-    [2, [['1. Hg(OAc)₂, THF/H₂O', '2. NaBH₄, NaOH']]],
+    [1, [['cat. H₂SO₄', 'H₂O'], [...oxymercuration, {name: 'Oxymercuration–demercuration'}]]],
+    [2, [oxymercuration]],
     [3, [['1. BH₃, THF', '2. H₂O₂, NaOH']]],
     [4, [['HBr']]],
     [5, [['Br₂']]],
