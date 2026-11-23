@@ -49,9 +49,9 @@ function mechanismInner(scene, state) {
   }).join('');
   return `<defs>
 
-<marker id="arrow-good" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" fill="#285b40"/></marker>
-<marker id="arrow-draft" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" fill="#475569"/></marker>
-<marker id="arrow-mistake" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" fill="#a1382b"/></marker>
+<marker id="arrow-good" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" style="fill:var(--arrow-good, #285b40)"/></marker>
+<marker id="arrow-draft" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" style="fill:var(--arrow-draft, #475569)"/></marker>
+<marker id="arrow-mistake" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 1.7 Q5.5 4.8 11 6 Q5.5 7.2 0 10.3 L3.3 6 Z" style="fill:var(--error, #a1382b)"/></marker>
 </defs><g class="${state.locked ? 'is-locked' : ''} ${state.motion === 'incorrect' ? 'shake' : ''}">${molecules}${separators}${paths}</g>`;
 }
 

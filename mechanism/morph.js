@@ -143,7 +143,7 @@ function morphFrame(plan, t) {
     if (distance(atomById(scene,bond[0]),atomById(scene,bond[1])) < 2) return;
     parts.push(`<polygon class="wedge" opacity="${opacity}" points="${wedgePoints(scene,bond[0],bond[1])}"/>`);
   }
-  const ink = '#24302b';
+  const ink = 'var(--bond-ink, #24302b)';
   for (const {old, next, flipped, entering, departing, growFromSecond, breakTowardSecond} of plan.bonds) {
     const a = segments(oldScene, old), b = segments(newScene, next);
     const sameStyle = old && next && (old[2] === next[2] || (typeof old[2] === 'number' && typeof next[2] === 'number'));
@@ -155,11 +155,11 @@ function morphFrame(plan, t) {
     }
     for (const line of a.slice(shared)) {
       if (departing) stroke(line,1,ink,false,1-breaking);
-      else stroke(line,1-breaking,breaking>0 ? '#a5533c' : ink,breakTowardSecond);
+      else stroke(line,1-breaking,breaking>0 ? 'var(--bond-breaking, #a5533c)' : ink,breakTowardSecond);
     }
     for (const line of b.slice(shared)) {
       if (entering) stroke(line,1,ink,false,plan.incomingReagents.has(next[0]) ? arriving : forming);
-      else stroke(line,forming,forming<1 ? '#187356' : ink,growFromSecond);
+      else stroke(line,forming,forming<1 ? 'var(--bond-forming, #187356)' : ink,growFromSecond);
     }
     if (sameStyle && old[2] === 'wedge' && !flipped) wedge(newScene, next, 1);
     else {
@@ -174,7 +174,7 @@ function morphFrame(plan, t) {
     const length = distance(atom,hydrogen);
     if (length < 22 || length > 90) continue;
     const [line] = bondSegment(oldScene,receiver,h,1);
-    stroke(line,forming * (1-morphProgress(t,.7,.88)), '#187356');
+    stroke(line,forming * (1-morphProgress(t,.7,.88)), 'var(--bond-forming, #187356)');
   }
   function label(atom, opacity) {
     if (opacity <= 0) return;
