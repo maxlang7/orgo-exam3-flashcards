@@ -618,7 +618,7 @@ function buildMechanisms() {
             leave('cCar', 'c2', 'c3'),
             lone(carbon, 'cCar')
           ]})))
-      ], {conditions: ['CH₂N₂', 'hν or heat']}));
+      ], {conditions: ['CH₂N₂']}));
   }
 
   {
@@ -1187,7 +1187,7 @@ function buildMechanisms() {
           leave('oE', 'oE', 'bL')
         ]),
         step('alkoxide', 'Protonation', protonate('oAlk'))
-      ], {conditions: ['1. BF₃·Et₂O, MeO⁻', '2. H₂O']}));
+      ]));
   }
 
   {
@@ -1206,7 +1206,7 @@ function buildMechanisms() {
           leave('oE', 'cL', 'oE')
         ]),
         step('alkoxide', 'Protonation', protonate('oAlk'))
-      ], {conditions: ['1. MeO⁻', '2. H₂O']}));
+      ]));
   }
 
   {
@@ -1356,7 +1356,7 @@ function buildMechanisms() {
           leave('oCO', 'cCO', 'oCO')
         ]),
         step('alkoxide', 'Acidic workup', protonate('oAlk'))
-      ], {conditions: ['1. EtMgBr', '2. H₃O⁺']}));
+      ]));
   }
 
   {
@@ -1392,7 +1392,7 @@ function buildMechanisms() {
           leave('oCO', 'cCO', 'oCO')
         ]),
         step('alkoxide', 'Acidic workup', protonate('oAlk'))
-      ], {conditions: ['1. EtMgBr', '2. H₃O⁺']}));
+      ]));
   }
 
   {
@@ -1432,7 +1432,7 @@ function buildMechanisms() {
           leave('oCO', 'cCO', 'oCO')
         ]),
         step('alkoxide', 'Acidic workup', protonate('oAlk'))
-      ], {conditions: ['1. EtMgBr', '2. H₃O⁺']}));
+      ]));
   }
 
   {
@@ -1496,7 +1496,7 @@ function buildMechanisms() {
           leave('oCO', 'cCO', 'oCO')
         ]),
         step('sec', 'Acidic workup', protonate('oAlk'))
-      ], {conditions: ['1. 2 equiv. EtMgBr', '2. H₃O⁺']}));
+      ]));
   }
 
   {
@@ -1566,7 +1566,7 @@ function buildMechanisms() {
           formPiBond('oAlk', 'cC'),
           leave('oH', 'cC', 'oH')
         ])
-      ], {conditions: ['1. 2 equiv. EtLi', '2. H₃O⁺']}));
+      ]));
   }
 
   return mechanisms;

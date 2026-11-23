@@ -1,65 +1,46 @@
-// Alternatives apply to the exact substrate, product and stereochemistry on each card.
-// Keep routes as complete reagent sequences, never interchangeable individual steps.
-// Oxidation references:
-// https://openstax.org/books/organic-chemistry/pages/17-7-oxidation-of-alcohols
-// https://ursula.chem.yale.edu/~chem220/chem220js/STUDYAIDS/oxidation/DMSOoxidation.html
-// Other routes follow the course sheet and standard functional-group reactions:
-// https://openstax.org/books/organic-chemistry/pages/8-7-oxidation-of-alkenes-epoxidation-and-hydroxylation
-// https://openstax.org/books/organic-chemistry/pages/8-8-oxidation-of-alkenes-cleavage-to-carbonyl-compounds
-// https://organicchemistrydata.org/reusch/virtualtext/alcohol-reactivity-1/
-const reagentRoutes = (() => {
-  const pcc = ['PCC', 'CH₂Cl₂'];
-  // Use the standard Swern base. The original sheet's pyridine label is retained
-  // only in its unchanged source image under "View original reaction & notes".
-  const swern = ['1. DMSO, oxalyl chloride', '2. Et₃N', {name: 'Swern oxidation'}];
-  const coreyKim = ['1. Me₂S, NCS', '2. Et₃N'];
-  const oxymercuration = ['1. Hg(OAc)₂, THF/H₂O', '2. NaBH₄, NaOH'];
-  return new Map([
-    [1, [['cat. H₂SO₄', 'H₂O'], [...oxymercuration, {name: 'Oxymercuration–demercuration'}]]],
-    [2, [oxymercuration]],
-    [3, [['1. BH₃, THF', '2. H₂O₂, NaOH']]],
-    [4, [['HBr']]],
-    [5, [['Br₂']]],
-    [6, [['Br₂', 'H₂O']]],
-    [7, [['mCPBA']]],
-    [8, [['1. OsO₄, pyridine', '2. NaHSO₃, H₂O'], ['KMnO₄, NaOH, H₂O', 'cold, dilute'], ['cat. OsO₄, NMO', 'H₂O, acetone']]],
-    [9, [['1. mCPBA', '2. NaOH, H₂O']]],
-    [10, [['CH₂I₂, Zn(Cu)'], ['CH₂N₂', 'hν or heat']]],
-    [11, [['t-BuOK, CHCl₃']]],
-    [12, [['1. O₃', '2. Me₂S'], ['1. O₃', '2. Zn, H₂O'], ['1. O₃', '2. PPh₃']]],
-    [13, [['NaNH₂', 'NH₃']]],
-    [15, [['2 equiv. Br₂']]],
-    [16, [['2 equiv. HBr']]],
-    [17, [['excess H₂, Pt'], ['excess H₂, Pd/C'], ['excess H₂, Ni']]],
-    [19, [['conc. H₂SO₄', 'heat']]],
-    [20, [['TsCl, pyridine']]],
-    // These cards depict primary alcohols, so the substitutions give the same product.
-    [21, [['SOCl₂', 'pyridine'], ['PCl₃'], ['PCl₅']]],
-    [22, [['PBr₃'], ['HBr'], ['PPh₃, CBr₄']]],
-    [23, [pcc, swern, coreyKim]],
-    [24, [pcc, swern, coreyKim]],
-    [25, [swern, pcc, coreyKim]],
-    [26, [coreyKim, pcc, swern]],
-    // Strong aqueous oxidants belong on the acid card, not the aldehyde card.
-    [27, [['CrO₃, H₂SO₄', 'H₂O'], ['K₂Cr₂O₇, H₂SO₄', 'H₂O'], ['1. KMnO₄, OH⁻, heat', '2. H₃O⁺']]],
-    [28, [['TBSCl, imidazole', 'NH₄F', {reverseArrow: true}]]],
-    [29, [['NaOH', 'H₂O'], ['KOH', 'H₂O']]],
-    [30, [['1. NaH, Et₂O', '2. CH₃CH₂Br'], ['1. NaH, Et₂O', '2. CH₃CH₂I']]],
-    [31, [['Mg⁰', 'or Li⁰']]],
-    [32, [['H₃O⁺', 'H₂O']]],
-    [33, [['MgBr₂·Et₂O or BF₃·Et₂O', 'Nu']]],
-    [34, [['Base']]],
-    [35, [['1. LiAlH₄', '2. H₃O⁺']]],
-    [37, [['1. LiAlH₄', '2. H₃O⁺']]],
-    // Card 38 is an aldehyde/ketone. Do not offer NaBH4 for the ester on card 37.
-    [38, [['1. NaBH₄', '2. H₃O⁺'], ['1. LiAlH₄, Et₂O', '2. H₃O⁺'], ['H₂, Pt']]],
-    [39, [['1. RMgBr', '2. H₃O⁺']]],
-    [40, [['1. RMgBr', '2. H₃O⁺']]],
-    [41, [['1. RMgBr', '2. H₃O⁺']]],
-    [42, [['1. 2 equiv. RMgBr', '2. H₃O⁺']]],
-    [43, [['1. 2 equiv. RLi', '2. H₃O⁺']]],
-  ]);
-})();
+// Transcribe each reaction's conditions and any alternatives listed on that entry.
+const reagentRoutes = new Map([
+  [1, [['cat. H₂SO₄', 'H₂O']]],
+  [2, [['1. Hg(OAc)₂, THF/H₂O', '2. NaBH₄, NaOH workup']]],
+  [3, [['1. BH₃, THF', '2. H₂O₂, NaOH workup']]],
+  [4, [['HBr']]],
+  [5, [['Br₂']]],
+  [6, [['Br₂', 'H₂O']]],
+  [7, [['mCPBA']]],
+  [8, [['1. OsO₄, pyridine', '2. NaHSO₃/H₂O'], ['1. KMnO₄ (dilute)', '2. Cold NaOH']]],
+  [9, [['1. mCPBA', '2. NaOH, H₂O']]],
+  [10, [['CH₂I₂, Zn(Cu)'], ['CH₂N₂']]],
+  [11, [['t-BuOK, CHCl₃']]],
+  [12, [['1. O₃', '2. SMe₂']]],
+  [13, [['NaNH₂', 'NH₃']]],
+  [15, [['Br₂']]],
+  [16, [['2 equiv. HBr']]],
+  [17, [['H₂', 'Pt or Pd']]],
+  [19, [['conc. H₂SO₄', 'heat']]],
+  [20, [['TsCl, pyridine']]],
+  [21, [['SOCl₂']]],
+  [22, [['PBr₃']]],
+  [23, [['PCC']]],
+  [24, [['PCC']]],
+  [25, [['1. DMSO, oxalyl chloride', '2. pyridine', {name: 'Swern oxidation'}]]],
+  [26, [['1. DMS, NCS', '2. Et₃N']]],
+  [27, [['H₂CrO₄', '(Jones reagent)'], ['KMnO₄, heat']]],
+  [28, [['TBSCl, imidazole', 'NH₄F', {reverseArrow: true}]]],
+  [29, [['NaOH', 'H₂O']]],
+  [30, [['1. NaH, Et₂O', '2. CH₃CH₂Br, Et₂O']]],
+  [31, [['Mg⁰', 'or Li⁰']]],
+  [32, [['H₃O⁺', 'H₂O']]],
+  [33, [['MgBr₂·Et₂O or BF₃·Et₂O', 'Nu']]],
+  [34, [['Base']]],
+  [35, [['1. LiAlH₄', '2. H₃O⁺']]],
+  [37, [['1. LiAlH₄', '2. H₃O⁺']]],
+  [38, [['1. NaBH₄', '2. H₃O⁺']]],
+  [39, [['1. RMgBr', '2. H₃O⁺']]],
+  [40, [['1. RMgBr', '2. H₃O⁺']]],
+  [41, [['1. RMgBr', '2. H₃O⁺']]],
+  [42, [['1. 2 equiv. RMgBr', '2. H₃O⁺']]],
+  [43, [['1. 2 equiv. RLi', '2. H₃O⁺']]],
+]);
 
 function renderReagentRoutes(svg, card, mode, revealed, mechanism) {
   const cardRoutes = reagentRoutes.get(card.id);
