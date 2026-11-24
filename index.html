@@ -1,9 +1,44 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reaction Flashcard Trainer</title><script src="theme.js?v=1"></script><link rel="stylesheet" href="style.css?v=rdkit-beta-1"><link rel="stylesheet" href="mechanism/drawing.css?v=theme-1"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reaction Flashcard Trainer</title><script src="theme.js?v=1"></script><link rel="stylesheet" href="style.css?v=home-1"><link rel="stylesheet" href="mechanism/drawing.css?v=theme-1"></head>
 <body><main>
-<header><div><h1>Reaction Flashcard Trainer</h1><p>09-219 Organic Chemistry <span aria-hidden="true">·</span> Exam III<span id="sheet-beta" hidden> · RDKit beta</span></p></div><label class="theme-setting">Theme<select id="theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></header>
-<div class="workbench"><aside class="settings"><details id="settings-panel" open><summary>Practice settings</summary><section class="practice-options" aria-label="Practice options">
+<header><div><h1>Reaction Flashcard Trainer</h1><p>09-219 Organic Chemistry <span aria-hidden="true">·</span> Exam III<span id="sheet-beta" hidden> · Beta</span></p></div><label class="theme-setting">Theme<select id="theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></header>
+<nav id="study-navigation" class="study-navigation" aria-label="Study navigation" hidden>
+<button type="button" data-study-view="home" aria-current="page">Home</button>
+<button type="button" data-study-view="reactions">Reactions</button>
+<button type="button" data-study-view="pka">pKa values</button>
+</nav>
+<section id="study-home" aria-labelledby="home-title" hidden>
+<div class="home-heading"><h2 id="home-title">Your progress</h2><button type="button" class="primary" id="jump-in">Jump in <span aria-hidden="true">→</span></button></div>
+<div class="home-stats">
+<p><strong id="home-streak">0</strong><span>day streak</span></p>
+<p><strong id="home-today">0</strong><span>cards today</span></p>
+<p><strong id="home-week">0</strong><span>study days this week</span></p>
+</div>
+<div class="home-middle">
+<section class="activity-panel" aria-labelledby="activity-title"><div class="section-heading"><h3 id="activity-title">Cards per day</h3><span>Last 28 days</span></div>
+<div id="activity-chart" class="activity-chart"></div><div class="activity-axis"><span id="activity-start"></span><span id="activity-end"></span></div>
+<div class="activity-legend"><span class="reaction-key">Reactions</span><span class="pka-key">pKa values</span></div>
+<p id="activity-description" class="muted-copy"></p>
+</section>
+<section class="weakness-panel" aria-labelledby="weakness-title"><h3 id="weakness-title">Worth another look</h3><div id="home-weaknesses"></div></section>
+</div>
+<section class="knowledge-section" aria-labelledby="reaction-map-title"><div class="section-heading"><h2 id="reaction-map-title">Every reaction</h2><span id="reaction-map-count"></span></div>
+<p class="muted-copy">Your confidence, card by card. Pick one to practice.</p>
+<div class="confidence-legend" aria-label="Confidence scale"><span data-level="0">Unrated</span><span data-level="1">Needs work</span><span data-level="2">Getting there</span><span data-level="3">Almost solid</span><span data-level="4">Solid</span></div>
+<div id="reaction-map"></div></section>
+<section class="knowledge-section" aria-labelledby="pka-map-title"><div class="section-heading"><h2 id="pka-map-title">Every pKa value</h2><span id="pka-map-count"></span></div>
+<p class="muted-copy">Your confidence with the approximate values from your pKa deck.</p><div id="pka-map" class="knowledge-grid"></div></section>
+<p id="local-storage-status" class="local-storage-status" role="status">Saved in this browser.</p>
+</section>
+<section id="pka-practice" aria-labelledby="pka-question" hidden>
+<div class="pka-practice-header"><h2 id="pka-question">What is the approximate pKa?</h2><button type="button" class="quiet" id="pka-next">Skip card</button></div>
+<div class="pka-study-card"><div id="pka-structure"></div><p id="pka-answer" aria-live="polite" hidden></p><button type="button" class="primary" id="pka-reveal">Reveal answer <kbd>Space</kbd></button>
+<div id="pka-rating" hidden><h3>How confident were you?</h3><div class="ratings">
+<button type="button" data-pka-rating="1"><kbd>1</kbd><strong>25%</strong><span>Needs work</span></button><button type="button" data-pka-rating="2"><kbd>2</kbd><strong>50%</strong><span>Getting there</span></button><button type="button" data-pka-rating="3"><kbd>3</kbd><strong>75%</strong><span>Almost solid</span></button><button type="button" data-pka-rating="4"><kbd>4</kbd><strong>100%</strong><span>Solid</span></button>
+</div></div></div><p id="pka-feedback" class="muted-copy" role="status"></p>
+</section>
+<div class="workbench" id="reaction-workbench"><aside class="settings"><details id="settings-panel" open><summary>Practice settings</summary><section class="practice-options" aria-label="Practice options">
 <label for="practice-mode">Practice mode<select id="practice-mode"><option value="mixed">Conditions & products</option><option value="reagents">Conditions only</option><option value="product">Products only</option><option value="mechanism">Mechanisms (beta)</option></select></label>
 
 <label for="practice-order">Card selection<select id="practice-order"><option value="adaptive">Low confidence first</option><option value="random">Equal chance</option></select></label>
@@ -46,4 +81,4 @@
 </div><details id="original-notes"><summary>View original reaction &amp; notes</summary><img id="answer" alt="Original reaction sheet entry"></details></div>
 </section>
 <footer><p id="feedback" role="status"></p><span>Progress saved on this device</span></footer>
-</div></div></main><script src="deck.js"></script><script src="reaction-sheet-deck.js?v=1"></script><script src="sheet-render.js?v=1"></script><script src="reagent-routes.js?v=rdkit-beta-1"></script><script src="mechanism/layout.js?v=overview-1"></script><script src="mechanism/geometry.js?v=morph-1"></script><script src="mechanism/render.js?v=theme-1"></script><script src="mechanism/transitions.js?v=br2-1"></script><script src="mechanism/morph.js?v=theme-1"></script><script src="mechanism/catalog.js?v=sheet-1"></script><script src="mechanisms.js?v=either-1"></script><script src="app.js?v=rdkit-beta-1"></script></body></html>
+</div></div></main><script src="deck.js"></script><script src="reaction-sheet-deck.js?v=1"></script><script src="sheet-render.js?v=1"></script><script src="reagent-routes.js?v=rdkit-beta-1"></script><script src="mechanism/layout.js?v=overview-1"></script><script src="mechanism/geometry.js?v=morph-1"></script><script src="mechanism/render.js?v=theme-1"></script><script src="mechanism/transitions.js?v=br2-1"></script><script src="mechanism/morph.js?v=theme-1"></script><script src="mechanism/catalog.js?v=sheet-1"></script><script src="mechanisms.js?v=either-1"></script><script src="pka-deck.js?v=1"></script><script src="app.js?v=home-1"></script><script src="dashboard.js?v=1"></script></body></html>

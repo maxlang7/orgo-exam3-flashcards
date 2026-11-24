@@ -197,6 +197,7 @@ function reveal() {
 function rate(rating) {
   if (!current || !revealed || ![1, 2, 3, 4].includes(rating)) return;
   ratings[ratingGroup()][current.id] = rating; save();
+  if (sheetBeta) recordStudyAnswer('reaction', current.id, rating);
   $('feedback').textContent = `Saved · ${rating * 25}% confidence`;
   next();
 }
@@ -286,6 +287,7 @@ function toggleSheetBeta() {
   $('feedback').textContent = '';
   buildChecklist();
   selectionChanged(previousId);
+  setDashboardBeta(sheetBeta);
 }
 $('select-all').onclick = () => { selected = new Set(availableCards().map(card => card.id)); selectionChanged(); };
 $('clear-all').onclick = () => { selected.clear(); selectionChanged(); };
@@ -332,6 +334,7 @@ document.addEventListener('keydown', event => {
     if (!event.repeat) toggleSheetBeta();
     return;
   }
+  if (sheetBeta && dashboardView !== 'reactions') return;
   if (['SELECT', 'INPUT', 'TEXTAREA'].includes(event.target.tagName) || event.target.isContentEditable) return;
   if (options.mode === 'mechanism' && current && attempt && (event.ctrlKey || event.metaKey)
       && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'z') {
@@ -363,6 +366,7 @@ buildChecklist();
 selectionChanged();
 
 window.matchMedia('(max-width: 600px)').addEventListener('change', () => {
+  if (sheetBeta && dashboardView !== 'reactions') return;
   if (cancelMorph) finishMorph();
   else if (attempt && current) paintMechanism();
 });
