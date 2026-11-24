@@ -211,3 +211,6 @@ footer > span { margin-left:auto; flex-shrink:0; }
   footer { flex-wrap:wrap; }
   .primary kbd, .ratings kbd { display:none; }
 }
+
+.sheet-reaction { color: var(--diagram-ink); }
+.sheet-divider { stroke: var(--line); }

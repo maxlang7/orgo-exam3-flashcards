@@ -4,7 +4,7 @@ function loadRatings(storageKey) {
   const ratings = {};
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey));
-    for (const card of deck) {
+    for (const card of sheetDeck) {
       if ([1, 2, 3, 4].includes(saved?.[card.id])) ratings[card.id] = saved[card.id];
     }
   } catch {}
@@ -22,13 +22,19 @@ try {
   }
 } catch {}
 const topicOf = card => card.id <= 12 ? 'alkenes' : card.id <= 18 ? 'alkynes' : card.id <= 28 ? 'alcohols' : card.id <= 31 ? 'halides' : card.id <= 36 ? 'epoxides' : 'carbonyls';
-const selectionKey = 'orgo-exam3-selected-v1';
-let selected = new Set(deck.filter(card => options.topic === 'all' || topicOf(card) === options.topic).map(card => card.id));
-try {
-  const saved = JSON.parse(localStorage.getItem(selectionKey));
-  if (Array.isArray(saved)) selected = new Set(saved.filter(id => deck.some(card => card.id === id)));
-} catch {}
-function activeDeck() { return deck.filter(card => selected.has(card.id)); }
+let sheetBeta = false;
+function availableCards() { return sheetBeta ? sheetDeck : deck; }
+function selectionKey() { return sheetBeta ? 'orgo-exam3-sheet-selected-v1' : 'orgo-exam3-selected-v1'; }
+function loadSelection() {
+  const cards = availableCards();
+  try {
+    const saved = JSON.parse(localStorage.getItem(selectionKey()));
+    if (Array.isArray(saved)) return new Set(saved.filter(id => cards.some(card => card.id === id)));
+  } catch {}
+  return new Set(cards.filter(card => options.topic === 'all' || topicOf(card) === options.topic).map(card => card.id));
+}
+let selected = loadSelection();
+function activeDeck() { return availableCards().filter(card => selected.has(card.id)); }
 function practiceDeck() {
   const cards = activeDeck();
   return options.mode === 'mechanism' ? cards.filter(card => mechanismFor(card.id)) : cards;
@@ -55,7 +61,8 @@ function updateVisibility() {
     ? 'Starting structure and product. Work out the reagents.'
     : 'Starting structure and reagents. Work out the product.';
   $('reaction').setAttribute('aria-label', label);
-  renderReagentRoutes($('reaction'), current, mode, revealed);
+  if (sheetBeta) renderSheetReaction($('reaction'), current, mode, revealed);
+  else renderReagentRoutes($('reaction'), current, mode, revealed);
 }
 let cancelMorph = null;
 function stopMorph() {
@@ -111,7 +118,14 @@ function next(requestedId) {
   mode = options.mode === 'mixed' ? (Math.random() < .5 ? 'reagents' : 'product') : options.mode;
   $('mode-label').textContent = mode === 'reagents' ? 'Conditions' : 'Product recall';
   $('question').textContent = mode === 'reagents' ? 'What reagents and conditions are needed?' : 'What product forms?';
-  $('instruction').textContent = mode === 'reagents' && reagentRoutes.get(current.id).length > 1 ? 'Give any one valid set of conditions.' : '';
+  const routes = sheetBeta ? current.paths[0].routes : reagentRoutes.get(current.id);
+  let instruction = '';
+  if (mode === 'reagents' && sheetBeta && current.paths.length > 1) {
+    instruction = 'Give the conditions for each row.';
+  } else if (mode === 'reagents' && routes.length > 1) {
+    instruction = 'Give any one valid set of conditions.';
+  }
+  $('instruction').textContent = instruction;
   $('practice-content').classList.remove('zoomed');
   $('reaction-zoom').textContent = 'Enlarge diagram';
   $('reaction-zoom').setAttribute('aria-pressed', 'false');
@@ -125,7 +139,8 @@ function startMechanism() {
   const mechanism = mechanismFor(current.id);
   attempt = createAttempt(mechanism);
   $('mech-overview').open = true;
-  renderReagentRoutes($('mech-scheme'), current, 'mechanism', true, mechanism);
+  if (sheetBeta) renderSheetReaction($('mech-scheme'), current, 'mechanism', true);
+  else renderReagentRoutes($('mech-scheme'), current, 'mechanism', true, mechanism);
   $('mech-stages').replaceChildren(...mechanism.steps.map(step => {
     const item = document.createElement('li');
     item.textContent = step.title;
@@ -220,42 +235,59 @@ function updateJumpList() {
   if (current) $('jump-card').value = current.id;
 }
 $('jump-card').onchange = () => next(Number($('jump-card').value));
-function selectionChanged() {
+function selectionChanged(requestedId) {
   updateJumpList();
-  try { localStorage.setItem(selectionKey, JSON.stringify([...selected])); } catch {}
+  try { localStorage.setItem(selectionKey(), JSON.stringify([...selected])); } catch {}
   for (const [id, input] of cardInputs) input.checked = selected.has(id);
   for (const [topic, input] of groupInputs) {
-    const cards = deck.filter(card => topicOf(card) === topic);
+    const cards = availableCards().filter(card => topicOf(card) === topic);
     const total = cards.filter(card => selected.has(card.id)).length;
     input.checked = total === cards.length;
     input.indeterminate = total > 0 && total < cards.length;
   }
-  $('selection-count').textContent = `${selected.size} / ${deck.length} selected`;
+  $('selection-count').textContent = `${selected.size} / ${availableCards().length} selected`;
   updateProgress();
-  if (!current || !selected.has(current.id)) next();
+  if (!current || !selected.has(current.id)) next(requestedId);
 }
-for (const [topic, name] of Object.entries(groupNames)) {
-  const group = document.createElement('fieldset');
-  const legend = document.createElement('legend');
-  const groupLabel = document.createElement('label');
-  const groupInput = document.createElement('input');
-  groupInput.type = 'checkbox'; groupInput.checked = true;
-  groupLabel.append(groupInput, document.createTextNode(name)); legend.append(groupLabel); group.append(legend);
-  groupInputs.set(topic, groupInput);
-  groupInput.onchange = () => {
-    for (const card of deck.filter(card => topicOf(card) === topic)) groupInput.checked ? selected.add(card.id) : selected.delete(card.id);
-    selectionChanged();
-  };
-  for (const card of deck.filter(card => topicOf(card) === topic)) {
-    const label = document.createElement('label'); label.className = 'reaction-choice';
-    const input = document.createElement('input'); input.type = 'checkbox'; input.checked = selected.has(card.id);
-    input.onchange = () => { input.checked ? selected.add(card.id) : selected.delete(card.id); selectionChanged(); };
-    label.append(input, document.createTextNode(card.name));
-    group.append(label); cardInputs.set(card.id, input);
+function buildChecklist() {
+  cardInputs.clear();
+  groupInputs.clear();
+  $('reaction-checklist').replaceChildren();
+  for (const [topic, name] of Object.entries(groupNames)) {
+    const group = document.createElement('fieldset');
+    const legend = document.createElement('legend');
+    const groupLabel = document.createElement('label');
+    const groupInput = document.createElement('input');
+    groupInput.type = 'checkbox'; groupInput.checked = true;
+    groupLabel.append(groupInput, document.createTextNode(name)); legend.append(groupLabel); group.append(legend);
+    groupInputs.set(topic, groupInput);
+    groupInput.onchange = () => {
+      for (const card of availableCards().filter(card => topicOf(card) === topic)) groupInput.checked ? selected.add(card.id) : selected.delete(card.id);
+      selectionChanged();
+    };
+    for (const card of availableCards().filter(card => topicOf(card) === topic)) {
+      const label = document.createElement('label'); label.className = 'reaction-choice';
+      const input = document.createElement('input'); input.type = 'checkbox'; input.checked = selected.has(card.id);
+      input.onchange = () => { input.checked ? selected.add(card.id) : selected.delete(card.id); selectionChanged(); };
+      label.append(input, document.createTextNode(card.name));
+      group.append(label); cardInputs.set(card.id, input);
+    }
+    $('reaction-checklist').append(group);
   }
-  $('reaction-checklist').append(group);
 }
-$('select-all').onclick = () => { selected = new Set(deck.map(card => card.id)); selectionChanged(); };
+function toggleSheetBeta() {
+  const previousId = current?.id;
+  sheetBeta = !sheetBeta;
+  $('sheet-beta').hidden = !sheetBeta;
+  selected = loadSelection();
+  current = null;
+  last = null;
+  count = 0;
+  $('feedback').textContent = '';
+  buildChecklist();
+  selectionChanged(previousId);
+}
+$('select-all').onclick = () => { selected = new Set(availableCards().map(card => card.id)); selectionChanged(); };
 $('clear-all').onclick = () => { selected.clear(); selectionChanged(); };
 $('mech-svg').addEventListener('click', event => {
   const target = event.target.closest('.atom, .bond-hit');
@@ -295,6 +327,11 @@ $('mech-show').onclick = () => {
   else paintMechanism(outcome);
 };
 document.addEventListener('keydown', event => {
+  if (event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey && event.code === 'KeyB') {
+    event.preventDefault();
+    if (!event.repeat) toggleSheetBeta();
+    return;
+  }
   if (['SELECT', 'INPUT', 'TEXTAREA'].includes(event.target.tagName) || event.target.isContentEditable) return;
   if (options.mode === 'mechanism' && current && attempt && (event.ctrlKey || event.metaKey)
       && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'z') {
@@ -322,6 +359,7 @@ $('reaction-zoom').onclick = () => {
 };
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 reducedMotion.addEventListener('change', () => { if (cancelMorph && reducedMotion.matches) finishMorph(); });
+buildChecklist();
 selectionChanged();
 
 window.matchMedia('(max-width: 600px)').addEventListener('change', () => {

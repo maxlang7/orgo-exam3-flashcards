@@ -81,13 +81,8 @@ function renderReagentRoutes(svg, card, mode, revealed, mechanism) {
       const route = node('g', {class: 'reagent-route'});
       if (name) route.append(node('text', {x: startX, y: arrowY - 37, class: 'route-name'}, name));
       route.append(node('text', {x: startX, y: arrowY - 13, class: 'route-label'}, above));
-      const arrow = (from, to, y) => {
-        const headBase = to - Math.sign(to - from) * 12;
-        route.append(node('path', {d: `M ${from} ${y} H ${headBase}`, class: 'route-arrow'}));
-        route.append(node('path', {d: `M ${headBase} ${y - 4} L ${to} ${y} L ${headBase} ${y + 4} Z`, class: 'route-arrowhead'}));
-      };
-      arrow(startX, endX, arrowY);
-      if (reverseArrow) arrow(endX, startX, arrowY + 9);
+      appendReactionArrow(route, node, startX, endX, arrowY);
+      if (reverseArrow) appendReactionArrow(route, node, endX, startX, arrowY + 9);
       if (below) route.append(node('text', {x: startX, y: arrowY + (reverseArrow ? 34 : 25), class: 'route-label'}, below));
       group.append(route);
       if (index < routes.length - 1) group.append(node('text', {x: centerX, y: top + 96, 'text-anchor': 'middle', class: 'route-or'}, 'or'));
@@ -127,4 +122,10 @@ function appendMechanismStructures(group, node, mechanism, slots, height) {
     drawing.innerHTML = mechanismInner(scene, {static: true});
     group.append(drawing);
   });
+}
+
+function appendReactionArrow(group, node, from, to, y) {
+  const headBase = to - Math.sign(to - from) * 12;
+  group.append(node('path', {d: `M ${from} ${y} H ${headBase}`, class: 'route-arrow'}));
+  group.append(node('path', {d: `M ${headBase} ${y - 4} L ${to} ${y} L ${headBase} ${y + 4} Z`, class: 'route-arrowhead'}));
 }
